@@ -1,20 +1,25 @@
-@*
- * This template takes a single argument, a String containing a
- * message to display.
- *@
-@(message: String)
-
-@*
- * Call the `main` template with two arguments. The first
- * argument is a `String` with the title of the page, the second
- * argument is an `Html` object containing the body of the page.
- *@
-@main("Welcome to Play") {
-
-    @*
-     * Get an `Html` object by calling the built-in Play welcome
-     * template and passing a `String` message.
-     *@
-    @play20.welcome(message, style = "Scala")
+@()
+@main("Sign in") {
+	<div data-ng-app="" data-ng-controller="SignInController">
+		<h1>Sign in</h1>
+		<form role="form"
+			data-ng-submit="postLoginForm('@routes.Application.login', '@routes.Application.welcome()')">
+			<div class="form-group">
+				<label for="username">Username</label>
+				<input class="form-control" data-ng-model="username"
+					data-ng-change="feedback = ''" autofocus>
+			</div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input class="form-control" data-ng-model="password"
+					type="password" data-ng-change="feedbac = ''">
+			</div>
+			<input type="submit" value="Sign in">
+		</form>
+		<div class="alert alert-danger well" data-ng-show="feedback !=''">
+			{{ feedback }} !
+		</div>
+	</div>
+    <script type="text/javascript" src="@routes.Assets.at("javascripts/login.js")"></script>
 
 }
