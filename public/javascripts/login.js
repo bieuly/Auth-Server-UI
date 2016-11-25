@@ -4,7 +4,7 @@ function LoginController($scope, $http) {
     
   $scope.postLoginForm = function(loginUrl, successUrl) {
     var data = {
-      username : $scope.username,
+      userName : $scope.username,
       password : $scope.password
     };
     $scope.successUrl = successUrl;
