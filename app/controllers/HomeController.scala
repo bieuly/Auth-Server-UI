@@ -15,30 +15,20 @@ import play.api.libs.json.JsValue
 
 import util.AuthServerUIConstants.AUTH_SERVER_URL
 import services.AuthServerClient
-
-/**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
-
-case class LoginRequest(username: String, password: String)
+import models.LoginRequest
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
+  
   private val logger = Logger(this.getClass)
-  /**
-   * Create an Action to render an HTML page with a welcome message.
-   * The configuration in the `routes` file means that this method
-   * will be called when the application receives a `GET` request with
-   * a path of `/`.
-   */
+
   def index = Action {
     Ok(views.html.index()).withNewSession
   }
 
   def login = Action.async(parse.json) { request =>
     implicit val loginRequest: Reads[LoginRequest] = Json.reads[LoginRequest]
-
+    
     request.body.validate[LoginRequest] match {
       case s: JsSuccess[LoginRequest] => {
         val username = s.get.username
