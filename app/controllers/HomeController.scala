@@ -19,16 +19,17 @@ import models.LoginRequest
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
-  
   private val logger = Logger(this.getClass)
 
-  def index = Action {
-    Ok(views.html.index()).withNewSession
+  def index = Action { implicit request =>
+    logger.error("username is: " + request.cookies.get("user").get.value)
+    logger.error("username is: " + request.cookies.get("token").get.value)
+    Ok(views.html.index()).discardingCookies(DiscardingCookie("user"), DiscardingCookie("token"))
   }
 
   def login = Action.async(parse.json) { request =>
     implicit val loginRequest: Reads[LoginRequest] = Json.reads[LoginRequest]
-    
+
     request.body.validate[LoginRequest] match {
       case s: JsSuccess[LoginRequest] => {
         val username = s.get.username
@@ -36,29 +37,28 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
 
         authClient.authenticate(username, password) map {
           case (200, token) => {
-            Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token))
+            Ok(toJson(Map("valid" -> true))).withCookies(Cookie("user", username), Cookie("token", token))
           }
           case (statusCode, errorMsg) => {
             logger.error(statusCode + ": " + errorMsg)
             (Ok(toJson(Map("valid" -> false))))
           }
         }
-        
+
       }
       case _ => Future(Ok(toJson(Map("valid" -> false))))
     }
   }
 
   def welcome = Action.async { implicit request =>
-
-    val username = request.session.get("user")
-    val token = request.session.get("token")
+    val username = request.cookies.get("user")
+    val token = request.cookies.get("token")
 
     Future(username.map {
       user =>
         token.map {
-          token => Ok(views.html.welcome(user, token))
-        }.getOrElse(Redirect(routes.HomeController.index())).withNewSession
-    }.getOrElse(Redirect(routes.HomeController.index())).withNewSession)
+          token => Ok(views.html.welcome(user.value, token.value))
+        }.getOrElse(Redirect(routes.HomeController.index()))
+    }.getOrElse(Redirect(routes.HomeController.index())))
   }
 }

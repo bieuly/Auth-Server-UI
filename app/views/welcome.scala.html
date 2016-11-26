@@ -2,6 +2,7 @@
 @main(s"Welcome $username") {
 		<h1>Welcome @username</h1>
 		Your token is: <br>
-		@token
+		@token <br>
+		<a href="@routes.HomeController.index" class="btn btn-info" role="button">Sign out</a>
 
 }
