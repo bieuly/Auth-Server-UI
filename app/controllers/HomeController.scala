@@ -66,7 +66,4 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     Ok("MOCKTOKENMOCKTOKENMOCKTOKEN")
   }
 
-  def mockAuthServiceGetUsers = Action {
-  }
-
 }

@@ -8,15 +8,20 @@
 		</header>
 	</div>
 	<div class="section group">
-		<div class="col span_1_of_3">
+		<div class="col span_1_of_6">
 			<ul class="navbar">
 				<li><button data-ng-model="customers_nav" data-ng-show="@permissions.contains(1)" data-ng-click="navSelection = 'Customers'">Customers</button></li>
 				<li><button data-ng-model="users_nav" data-ng-show="@permissions.contains(2)" data-ng-click="navSelection = 'Users'">Users</button></li>
 				<li><button data-ng-model="roles_nav" data-ng-show="@permissions.contains(3)" data-ng-click="navSelection = 'Roles'">Roles</button></li>
 			</ul>
 		</div>
-		<div class="col span_2_of_3">
-			Showing content for {{ navSelection }}
+		<div class="col span_5_of_6">
+			<div class="col span_1_of_3">
+				Showing listings for {{ navSelection }}
+			</div>
+			<div class="col span_2_of_3">
+				Showing details for {{ navSelection }}
+			</div>
 		</div>
 	</div>
 </div>
