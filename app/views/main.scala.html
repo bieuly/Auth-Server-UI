@@ -6,12 +6,16 @@
         <title>Sign in</title>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.23/angular.min.js"></script>
-        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
-        <script type="text/javascript" src="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-        </head>
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/main.css")" media="all">
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/col.css")" media="all">
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/2cols.css")" media="all">
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/3cols.css")" media="all">
+        <link rel="stylesheet" href="@routes.Assets.versioned("stylesheets/4cols.css")" media="all">
+
+    </head>
     <body>
-      <div style="padding:20px">
+    <div class="main_container">
         @content
-        </div>
+    </div>
     </body>
 </html>

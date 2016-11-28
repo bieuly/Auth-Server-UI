@@ -15,3 +15,4 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 POST	/login						controllers.HomeController.login
 GET		/welcome					controllers.HomeController.welcome
 
+POST    /token                      controllers.HomeController.mockAuthServerGetToken

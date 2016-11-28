@@ -22,8 +22,6 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
   private val logger = Logger(this.getClass)
 
   def index = Action { implicit request =>
-    logger.error("username is: " + request.cookies.get("user").get.value)
-    logger.error("username is: " + request.cookies.get("token").get.value)
     Ok(views.html.index()).discardingCookies(DiscardingCookie("user"), DiscardingCookie("token"))
   }
 
@@ -54,11 +52,21 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     val username = request.cookies.get("user")
     val token = request.cookies.get("token")
 
+    // TODO: need to generate a list of permissions that the user has and pass it into the welcome view
+
     Future(username.map {
       user =>
         token.map {
-          token => Ok(views.html.welcome(user.value, token.value))
+          token => Ok(views.html.welcome(user.value, token.value, List(1,2)))
         }.getOrElse(Redirect(routes.HomeController.index()))
     }.getOrElse(Redirect(routes.HomeController.index())))
   }
+
+  def mockAuthServerGetToken = Action {
+    Ok("MOCKTOKENMOCKTOKENMOCKTOKEN")
+  }
+
+  def mockAuthServiceGetUsers = Action {
+  }
+
 }
