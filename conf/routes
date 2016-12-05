@@ -10,5 +10,10 @@ GET		/welcome					controllers.HomeController.welcome
 
 POST    /token                      controllers.HomeController.mockAuthServerGetToken
 
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /customers                  controllers.HomeController.getCustomers
 
+GET     /users                      controllers.HomeController.getUsers
+
+GET     /roles                      controllers.HomeController.getRoles
+
+GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

@@ -1,20 +1,26 @@
 @()
 @main("Sign in") {
 	<div data-ng-app="" data-ng-controller="LoginController">
-		<h1>Sign in</h1>
 		<form role="form"
 			data-ng-submit="postLoginForm('@routes.HomeController.login', '@routes.HomeController.welcome()')">
-			<div class="form-group">
-				<label for="username">Username</label>
-				<input class="form-control" data-ng-model="username"
-					data-ng-change="feedback = ''" autofocus>
-			</div>
-			<div class="form-group">
-				<label for="password">Password</label>
-				<input class="form-control" data-ng-model="password"
-					type="password" data-ng-change="feedback = ''">
-			</div>
-			<input class="btn btn-info" type="submit" value="Sign in">
+            <div class="col span_2_of_5"></div>
+            <div class="sign-in-panel panel panel-default col span_1_of_5">
+                <div class="panel-body">
+                    <h1 class="sign-in-header">Sign in</h1>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input class="form-control" data-ng-model="username"
+                               data-ng-change="feedback = ''" autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input class="form-control" data-ng-model="password"
+                               type="password" data-ng-change="feedback = ''">
+                    </div>
+                    <input class="btn btn-primary" type="submit" value="Sign in">
+                </div>
+            </div>
+            <div class="col span_2_of_5"></div>
 		</form>
 		<div class="alert alert-danger well" data-ng-show="feedback !=''">
 			{{ feedback }}!

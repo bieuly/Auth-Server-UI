@@ -1,21 +1,22 @@
 package controllers
 
 import javax.inject._
+
 import play.api._
 import play.api.mvc._
-import play.api.libs.json.Reads
-import play.api.libs.json.Json
-import play.api.libs.json.JsSuccess
+import play.api.libs.json._
 import play.api.libs.json.Json.toJson
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSRequest
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import scala.concurrent.Future
-import play.api.libs.json.JsValue
 
-import util.AuthServerUIConstants.AUTH_SERVER_URL
+import scala.concurrent.Future
+import _root_.util.AuthServerUIConstants.AUTH_SERVER_URL
 import services.AuthServerClient
 import models.LoginRequest
+import models.Customer
+import _root_.util.JsonMappers.customerFmt
+import _root_.util.JsonMappers.loginRequestFmt
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -26,7 +27,6 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
   }
 
   def login = Action.async(parse.json) { request =>
-    implicit val loginRequest: Reads[LoginRequest] = Json.reads[LoginRequest]
 
     request.body.validate[LoginRequest] match {
       case s: JsSuccess[LoginRequest] => {
@@ -52,18 +52,37 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     val username = request.cookies.get("user")
     val token = request.cookies.get("token")
 
-    // TODO: need to generate a list of permissions that the user has and pass it into the welcome view
+    val customers = Json.parse(authClient.getCustomers).validate[List[Customer]] match {
+      case customers: JsSuccess[List[Customer]] => Some(customers.get)
+      case e : JsError => {
+        logger.error("Errors: " + JsError.toJson(e).toString())
+        None
+      }
+    }
 
     Future(username.map {
       user =>
         token.map {
-          token => Ok(views.html.welcome(user.value, token.value, List(1,2)))
+          token => Ok(views.html.welcome(user.value, token.value, List(1,2), customers))
         }.getOrElse(Redirect(routes.HomeController.index()))
     }.getOrElse(Redirect(routes.HomeController.index())))
   }
 
   def mockAuthServerGetToken = Action {
     Ok("MOCKTOKENMOCKTOKENMOCKTOKEN")
+  }
+
+  def getCustomers = Action.async {
+    val customersJsonString = authClient.getCustomers
+    Future(Ok(customersJsonString))
+  }
+
+  def getUsers = Action.async {
+    Future(Ok("user data"))
+  }
+
+  def getRoles = Action.async {
+    Future(Ok("role data"))
   }
 
 }

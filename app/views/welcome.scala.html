@@ -1,28 +1,115 @@
-@(username: String, token: String, permissions: List[Int])
+@import play.api.libs.json.Json
+@import play.api.libs.json.Json.toJson
+@import util.JsonMappers.customerFmt
+@(username: String, token: String, permissions: List[Int], customers: Option[List[Customer]])
 @main(s"Welcome $username") {
 <div data-ng-app="" data-ng-controller="NavController">
 	<div class="section group">
-		<header>
-			<div class="col span_3_of_4"><h1>Welcome @username!</h1></div>
-			<div class="col span_1_of_4"><a href="@routes.HomeController.index" class="btn btn-info" role="button">Sign out</a></div>
-		</header>
+        <div class='page-header'>
+            <div class='btn-toolbar pull-right'>
+                <div class='btn-group'>
+                    <a href="@routes.HomeController.index" class="btn btn-primary" role="button">Sign out</a>
+                </div>
+            </div>
+            <h1>Welcome @username!</h1>
+
+        </div>
 	</div>
 	<div class="section group">
-		<div class="col span_1_of_6">
-			<ul class="navbar">
-				<li><button data-ng-model="customers_nav" data-ng-show="@permissions.contains(1)" data-ng-click="navSelection = 'Customers'">Customers</button></li>
-				<li><button data-ng-model="users_nav" data-ng-show="@permissions.contains(2)" data-ng-click="navSelection = 'Users'">Users</button></li>
-				<li><button data-ng-model="roles_nav" data-ng-show="@permissions.contains(3)" data-ng-click="navSelection = 'Roles'">Roles</button></li>
-			</ul>
-		</div>
-		<div class="col span_5_of_6">
-			<div class="col span_1_of_3">
-				Showing listings for {{ navSelection }}
+        <div class="col span_1_of_4 list-group">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <b>Customers</b>
+                <div class="btn-group pull-right">
+                    <a href="#" data-ng-click="showCreateCustomerForm=true; showCustomerDetails=false"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                </div>
+            </div>
+            <div class="panel-body">
+                <ul class="list-group">
+                    @customers.isDefined match {
+                        case true => {
+                            @for(customer <- customers.get){
+                                <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false" href="#">@customer.firstName</a>
+                            }
+                        }
+                        case false => {
+                            <b>Error while trying to retrieve customers</b>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
 			</div>
-			<div class="col span_2_of_3">
-				Showing details for {{ navSelection }}
+			<div class="col span_3_of_4">
+                <div class="panel panel-default" data-ng-show="showCustomerDetails">
+                    <div class="panel-heading"><b>Customer Details</b></div>
+                    <div class="panel-body">
+                        <div class="section group">
+                            <ul class="list-group">
+                                <li>ID: {{ selectedCustomer._id }}</li>
+                                <li>First Name: {{selectedCustomer.firstName}}</li>
+                                <li>Last Name: {{selectedCustomer.lastName}}</li>
+                            </ul>
+                        </div>
+                        <div class="section group">
+                            <ul class="nav nav-tabs">
+                                <li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
+                                <li role="presentation" id="rolesTab"><a href="#"><span>Roles</span></a></li>
+                            </ul>
+                            <div class="col span_3_of_12">
+                                <div class="panel panel-default" data-ng-show="showUsers">
+                                    <div class="panel-heading clearfix">
+                                        <b>Users</b>
+                                        <div class="btn-group pull-right">
+                                            <a href="#" data-ng-click="showCreateUserForm=true"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body">
+                                        You do not have permission to view this.
+                                    </div>
+                                </div>
+                                <div class="panel panel-default" data-ng-show="showRoles">
+                                    <div class="panel-heading clearfix">
+                                        <b>Roles</b>
+                                        <div class="btn-group pull-right">
+                                            <a href="#" data-ng-click="showCreateRoleForm=true"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body">
+                                        You do not have permission to view this.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col span_8_of_12">
+                                <div class="panel panel-default" data-ng-show="showCreateUserForm">
+                                    <div class="panel-heading">
+                                        <b>Create User</b>
+                                    </div>
+                                    <div class="panel-body">
+                                        Form for creating a user should be here.
+
+                                    </div>
+                                </div>
+                                <div class="panel panel-default" data-ng-show="showCreateRoleForm">
+                                    <div class="panel-heading">
+                                        <b>Create Role</b>
+                                    </div>
+                                    <div class="panel-body">
+                                        Form for creating a role should be here.
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel panel-default" data-ng-show="showCreateCustomerForm">
+                    <div class="panel-heading"><b>Create Customer</b></div>
+                    <div class="panel-body">
+                        Form for creating a customer should be here
+                    </div>
+                </div>
 			</div>
-		</div>
 	</div>
 </div>
 <script type="text/javascript" src="@routes.Assets.versioned("javascripts/NavController.js")"></script>

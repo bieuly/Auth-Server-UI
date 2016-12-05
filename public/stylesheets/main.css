@@ -17,3 +17,17 @@ ul {
 button {
 	margin: 1%;
 }
+
+li {
+    padding: 0.75%;
+}
+
+span.glyphicon-plus-sign {
+    font-size: 1.6em;
+}
+
+.sign-in-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 9px;
+
+}
