@@ -31,3 +31,11 @@ span.glyphicon-plus-sign {
     padding-bottom: 9px;
 
 }
+
+.form-check-label {
+	font-weight: 400;
+}
+
+label.form-inline {
+	font-weight: 400;
+}
