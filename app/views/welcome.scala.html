@@ -1,7 +1,7 @@
 @import play.api.libs.json.Json
 @import play.api.libs.json.Json.toJson
 @import util.JsonMappers.customerFmt
-@(username: String, token: String, permissions: List[Int], customers: Option[List[Customer]])
+@(username: String, token: String, permissions: Option[Map[String,Seq[Int]]], customers: Option[List[Customer]])
 @main(s"Welcome $username") {
 <div data-ng-app="" data-ng-controller="NavController">
 	<div class="section group">
@@ -19,7 +19,7 @@
         <div class="col span_1_of_4 list-group">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
-                <b>Customers</b>
+                <b>CUSTOMERS</b>
                 <div class="btn-group pull-right">
                     <a href="#" data-ng-click="showCreateCustomerForm=true; showCustomerDetails=false"><span class="glyphicon glyphicon-plus-sign"></span></a>
                 </div>
@@ -42,7 +42,7 @@
 			</div>
 			<div class="col span_3_of_4">
                 <div class="panel panel-default" data-ng-show="showCustomerDetails">
-                    <div class="panel-heading"><b>Customer Details</b></div>
+                    <div class="panel-heading"><b>CUSTOMER DETAILS</b></div>
                     <div class="panel-body">
                         <div class="section group">
                             <ul class="list-group">
@@ -51,12 +51,12 @@
                                 <li>Last Name: {{selectedCustomer.lastName}}</li>
                             </ul>
                         </div>
+                       	<ul class="nav nav-tabs">
+                        	<li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
+                            <li role="presentation" id="rolesTab"><a href="#"><span>Roles</span></a></li>
+                        </ul>
                         <div class="section group">
-                            <ul class="nav nav-tabs">
-                                <li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
-                                <li role="presentation" id="rolesTab"><a href="#"><span>Roles</span></a></li>
-                            </ul>
-                            <div class="col span_3_of_12">
+                            <div class="col span_2_of_7">
                                 <div class="panel panel-default" data-ng-show="showUsers">
                                     <div class="panel-heading clearfix">
                                         <b>Users</b>
@@ -80,7 +80,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col span_8_of_12">
+                            <div class="col span_5_of_7">
                                 <div class="panel panel-default" data-ng-show="showCreateUserForm">
                                     <div class="panel-heading">
                                         <b>Create User</b>
@@ -203,9 +203,22 @@
                     </div>
                 </div>
                 <div class="panel panel-default" data-ng-show="showCreateCustomerForm">
-                    <div class="panel-heading"><b>Create Customer</b></div>
-                    <div class="panel-body">
-                        Form for creating a customer should be here
+                    <div class="panel-heading"><b>CREATE CUSTOMER</b></div>
+                    	<div class="panel-body">
+                    		<form id="createcustomerform">
+                				<div class="section group">
+                         			<div class="col span_1_of_4">
+                        				<label>Name:</label>
+										<div class="form-group">
+	    									<input type="text" class="form-control" id="firstname" placeholder="eg: BillyBob">
+										</div>
+									</div>
+								</div>
+									<div class="pull-right">
+										<button type="submit" class="btn btn-primary">Save</button>
+										<button class="btn" data-ng-click="showCreateUserForm=false">Cancel</button>
+									</div>								
+							</form>
                     </div>
                 </div>
 			</div>

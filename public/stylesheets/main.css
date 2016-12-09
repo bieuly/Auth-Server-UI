@@ -39,3 +39,7 @@ span.glyphicon-plus-sign {
 label.form-inline {
 	font-weight: 400;
 }
+
+.panel-heading {
+	color: #046595 !important;
+}

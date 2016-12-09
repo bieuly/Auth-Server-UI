@@ -17,6 +17,8 @@ import models.LoginRequest
 import models.Customer
 import _root_.util.JsonMappers.customerFmt
 import _root_.util.JsonMappers.loginRequestFmt
+import _root_.util.JsonMappers.tokenClaimReads
+import models.TokenClaim
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -54,7 +56,7 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
 
     val customers = Json.parse(authClient.getCustomers).validate[List[Customer]] match {
       case customers: JsSuccess[List[Customer]] => Some(customers.get)
-      case e : JsError => {
+      case e: JsError => {
         logger.error("Errors: " + JsError.toJson(e).toString())
         None
       }
@@ -63,7 +65,17 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     Future(username.map {
       user =>
         token.map {
-          token => Ok(views.html.welcome(user.value, token.value, List(1,2), customers))
+          token =>
+            {
+              val permissions = Json.parse(authClient.tokenVerify(token.value)).validate[TokenClaim] match {
+                case tokenClaim: JsSuccess[TokenClaim] => Some(tokenClaim.value.permissions)
+                case e: JsError => {
+                  logger.error("Errors: " + JsError.toJson(e).toString())
+                  None
+                }
+              }
+              Ok(views.html.welcome(user.value, token.value, permissions, customers))
+            }
         }.getOrElse(Redirect(routes.HomeController.index()))
     }.getOrElse(Redirect(routes.HomeController.index())))
   }

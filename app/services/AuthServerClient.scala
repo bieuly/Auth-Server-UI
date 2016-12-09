@@ -9,8 +9,6 @@ import com.google.inject.Inject
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import play.api.libs.json._
-import net.liftweb.json._
-import net.liftweb.json.DefaultFormats
 import scala.collection.mutable.ArrayBuffer
 
 class AuthServerClient @Inject() (ws: WSClient){
@@ -28,14 +26,33 @@ class AuthServerClient @Inject() (ws: WSClient){
   }
 
   def tokenVerify(token: String) = {
-    val request: WSRequest = ws.url(AUTH_SERVER_URL + "/token/decoded.json").withHeaders(("Content-type", "text/plain"))
-    val responseFuture = request.post(token)
-
-    responseFuture map { response =>
-      {
-        (response.status, response.body)
+//    val request: WSRequest = ws.url(AUTH_SERVER_URL + "/token/decoded.json").withHeaders(("Content-type", "text/plain"))
+//    val responseFuture = request.post(token)
+//
+//    responseFuture map { response =>
+//      {
+//        (response.status, response.body)
+//      }
+//    }
+    val authServerUIResponse = 
+      """{
+        "userName": "irisuser",
+        "permissions": {
+          "MS": [
+            2,
+            1
+          ],
+          "PS": [
+            7,
+            4,
+            3
+          ]
+        },
+        "tokenExpiryTime": 1489009052774
       }
-    }
+      """
+    
+    authServerUIResponse
   }
 
   def getCustomers = {
