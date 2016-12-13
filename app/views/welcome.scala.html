@@ -1,7 +1,7 @@
 @import play.api.libs.json.Json
 @import play.api.libs.json.Json.toJson
 @import util.JsonMappers.customerFmt
-@(username: String, token: String, permissions: Option[Map[String,Seq[Int]]], customers: Option[List[Customer]])
+@(username: String, token: String, customers: Option[List[Customer]], permission: Boolean)
 @main(s"Welcome $username") {
 <div data-ng-app="" data-ng-controller="NavController">
 	<div class="section group">
@@ -29,7 +29,7 @@
                     @customers.isDefined match {
                         case true => {
                             @for(customer <- customers.get){
-                                <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false" href="#">@customer.firstName</a>
+                                <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false" href="#">@customer.customerName</a>
                             }
                         }
                         case false => {
@@ -47,8 +47,7 @@
                         <div class="section group">
                             <ul class="list-group">
                                 <li>ID: {{ selectedCustomer._id }}</li>
-                                <li>First Name: {{selectedCustomer.firstName}}</li>
-                                <li>Last Name: {{selectedCustomer.lastName}}</li>
+                                <li>Name: {{selectedCustomer.customerName}}</li>
                             </ul>
                         </div>
                        	<ul class="nav nav-tabs">

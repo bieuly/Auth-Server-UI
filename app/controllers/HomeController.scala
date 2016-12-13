@@ -19,6 +19,8 @@ import _root_.util.JsonMappers.customerFmt
 import _root_.util.JsonMappers.loginRequestFmt
 import _root_.util.JsonMappers.tokenClaimReads
 import models.TokenClaim
+import security.AuthServerUIPermissions.ManageCustomers
+import security.AuthServerUIPermissions.ViewCustomers
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -68,13 +70,30 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           token =>
             {
               val permissions = Json.parse(authClient.tokenVerify(token.value)).validate[TokenClaim] match {
-                case tokenClaim: JsSuccess[TokenClaim] => Some(tokenClaim.value.permissions)
+                case tokenClaim: JsSuccess[TokenClaim] => getAuthServerUIPermissions(tokenClaim.value.permissions)
                 case e: JsError => {
                   logger.error("Errors: " + JsError.toJson(e).toString())
                   None
                 }
               }
-              Ok(views.html.welcome(user.value, token.value, permissions, customers))
+
+              val customers = permissions match {
+                case Some(permissions) => {
+                  if (permissions.exists { p => p == ManageCustomers.id || p == ViewCustomers.id }) {
+                    Json.parse(authClient.getCustomers).validate[List[Customer]] match {
+                      case customers: JsSuccess[List[Customer]] => Some(customers.get)
+                      case e: JsError => {
+                        logger.error("Errors: " + JsError.toJson(e).toString())
+                        None
+                      }
+                    }
+                  } else None
+
+                }
+                case None => None
+              }
+
+              Ok(views.html.welcome(user.value, token.value, customers, true))
             }
         }.getOrElse(Redirect(routes.HomeController.index()))
     }.getOrElse(Redirect(routes.HomeController.index())))
@@ -90,11 +109,17 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
   }
 
   def getUsers = Action.async {
-    Future(Ok("user data"))
+    val usersJsonString = authClient.getUsers
+    Future(Ok(usersJsonString))
   }
 
   def getRoles = Action.async {
-    Future(Ok("role data"))
+    val rolesJsonString = authClient.getRoles
+    Future(Ok(rolesJsonString))
+  }
+
+  def getAuthServerUIPermissions(userPermissions: Map[String, Seq[Int]]) = {
+    userPermissions.get("AUI")
   }
 
 }

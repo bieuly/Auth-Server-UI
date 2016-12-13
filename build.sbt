@@ -12,7 +12,8 @@ libraryDependencies ++= Seq(
   ws,
   "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
-  "net.liftweb" %% "lift-json" % "2.6+"
+  "net.liftweb" %% "lift-json" % "2.6+",
+  "com.digitalpaytech" %% "auth-client" % "1.3.4"
 
 )
 
