@@ -1,9 +1,9 @@
 @import play.api.libs.json.Json
 @import play.api.libs.json.Json.toJson
 @import util.JsonMappers.customerFmt
-@(username: String, token: String, customers: Option[List[Customer]], permission: Boolean)
+@(username: String, token: String, customers: Option[List[Customer]], permissions: Option[Seq[Int]])
 @main(s"Welcome $username") {
-<div data-ng-app="" data-ng-controller="NavController">
+<div data-ng-controller="mainController">
 	<div class="section group">
         <div class='page-header'>
             <div class='btn-toolbar pull-right'>
@@ -15,7 +15,7 @@
 
         </div>
 	</div>
-	<div class="section group">
+	<div class="section group" data-ng-if="@permissions.isDefined">
         <div class="col span_1_of_4 list-group">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
@@ -60,7 +60,7 @@
                                     <div class="panel-heading clearfix">
                                         <b>Users</b>
                                         <div class="btn-group pull-right">
-                                            <a href="#" data-ng-click="showCreateUserForm=true"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                                            <a href="#" data-ng-click="showCreateUserForm=true; "><span class="glyphicon glyphicon-plus-sign"></span></a>
                                         </div>
                                     </div>
                                     <div class="panel-body">
@@ -91,14 +91,14 @@
 		                                    		<label>Display Name:</label>
 		                                    		<div class="form-inline form-group">
 													   <div class="form-group">
-													    <input type="text" class="form-control" id="firstname" placeholder="First Name">
+													    <input type="text" class="form-control" id="firstname" placeholder="First Name" data-ng-model="newUserFirstName">
 													  </div>
 													  <div class="form-group">
-													    <input type="text" class="form-control" id="lastname" placeholder="Last Name">
+													    <input type="text" class="form-control" id="lastname" placeholder="Last Name" data-ng-model="newUserLastName">
 													  </div>                                   			
 		                                    		</div>
 	                                    		</div>
-	                                    		<div class="col_span_1_of_5">
+	                                    		<div class="col span_1_of_5">
 	                                    			<label>Status:</label>
 	                                    			<div class="form-check">
 													  <label class="form-check-label">
@@ -117,6 +117,23 @@
 		                                    			</div>
 		                                    		</div>
                                     			</div>
+											</div>
+											<div class="section group">
+												<div class="col span_2_of_5">
+													<label>Password:</label>
+													<div class="form-group">
+														<input type="password" class="form-control" data-ng-model="newUserPassword">
+													</div>
+												</div>
+												<div class="col span_2_of_5">
+													<label>Re-enter password:</label>
+													<input type="password" class="form-control" data-ng-model="newUserPasswordRepeat">
+												</div>
+											</div>
+											<div class="section group">
+												<div class="col span_4_of_5">
+													<div class="alert alert-warning" data-ng-show="newUserPassword !== '' && newUserPasswordRepeat !== '' && newUserPassword !== newUserPasswordRepeat">Passwords are not identical</div>
+												</div>
 											</div>
 											<div class="section group">
 												<div class="col span_2_of_4">
@@ -161,37 +178,27 @@
                                     	
                                     		<div class="form-group">
 										    	<label>Name:</label>
-										    	<input type="text" class="form-control" id="rolename" placeholder="eg. Administrator">
+										    	<input type="text" class="form-control" id="newRoleName" placeholder="eg. Administrator" data-ng-model="newRoleName">
   											</div>
   											<div class="form-group">
 	  											<label>Permissions:</label>
 	  											<div class="panel panel-default">
 	  												<div class="panel-body">
-														<div class="form-check">
-														  <label class="form-check-label">
-														    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
-														    Send SMS
-														  </label>
+														<div data-ng-repeat="permission in permissions">
+															<div class="form-check">
+																<label class="form-check-label">
+																	<input class="form-check-input" type="checkbox" data-checklist-model="selectedPermissions.selected" data-checklist-value="permission">
+																	{{ permission.text }}
+																</label>
+															</div>
 														</div>
-														<div class="form-check">
-														  <label class="form-check-label">
-														    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
-														    End Conversation
-														  </label>
-														</div>
-														<div class="form-check">
-														  <label class="form-check-label">
-														    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
-														    Process Transactions
-														  </label>
-														</div>  												
 	  												</div>
 	  											</div>  											
   											</div>
 									    </div>
 									    <div class="section group col pull-right">
 									    	<button type="submit" class="btn btn-primary">Save</button>
-									    	<button class="btn btn-alert" data-ng-click="showCreateRoleForm=false">Cancel</button>
+									    	<button class="btn btn-alert" data-ng-click="showCreateRoleForm=false; clearCreateRoleForm()">Cancel</button>
 									    </div>
                                     	</form>
 
@@ -223,8 +230,4 @@
 			</div>
 	</div>
 </div>
-<script type="text/javascript" src="@routes.Assets.versioned("javascripts/NavController.js")"></script>
-
-
-
 }

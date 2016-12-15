@@ -19,8 +19,8 @@ import _root_.util.JsonMappers.customerFmt
 import _root_.util.JsonMappers.loginRequestFmt
 import _root_.util.JsonMappers.tokenClaimReads
 import models.TokenClaim
-import security.AuthServerUIPermissions.ManageCustomers
-import security.AuthServerUIPermissions.ViewCustomers
+//import security.AuthServerUIPermissions.ManageCustomers
+//import security.AuthServerUIPermissions.ViewCustomers
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -38,15 +38,12 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
         val password = s.get.password
 
         authClient.authenticate(username, password) map {
-          case (200, token) => {
-            Ok(toJson(Map("valid" -> true))).withCookies(Cookie("user", username), Cookie("token", token))
-          }
+          case (200, token) => Ok(toJson(Map("valid" -> true))).withCookies(Cookie("user", username), Cookie("token", token))
           case (statusCode, errorMsg) => {
             logger.error(statusCode + ": " + errorMsg)
             (Ok(toJson(Map("valid" -> false))))
           }
         }
-
       }
       case _ => Future(Ok(toJson(Map("valid" -> false))))
     }
@@ -73,30 +70,37 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
                 case tokenClaim: JsSuccess[TokenClaim] => getAuthServerUIPermissions(tokenClaim.value.permissions)
                 case e: JsError => {
                   logger.error("Errors: " + JsError.toJson(e).toString())
-                  None
+                  throw new Exception("Unable to parse token")
                 }
               }
-
               val customers = permissions match {
                 case Some(permissions) => {
-                  if (permissions.exists { p => p == ManageCustomers.id || p == ViewCustomers.id }) {
+                  //if (permissions.exists { p => p == ManageCustomers.id || p == ViewCustomers.id }) {
+                  if (permissions.exists { p => p == 1 || p == 2 }) {
                     Json.parse(authClient.getCustomers).validate[List[Customer]] match {
                       case customers: JsSuccess[List[Customer]] => Some(customers.get)
                       case e: JsError => {
                         logger.error("Errors: " + JsError.toJson(e).toString())
-                        None
+                        throw new Exception("Unable to parse customers")
                       }
                     }
-                  } else None
+                  } else {
+                    logger.error("User does not have customer permissions")
+                    None
+                  }
 
                 }
-                case None => None
+                case None => {
+                  logger.error("User does not have any permissions")
+                  None
+                }
               }
-
-              Ok(views.html.welcome(user.value, token.value, customers, true))
+              Ok(views.html.welcome(user.value, token.value, customers, permissions))
             }
         }.getOrElse(Redirect(routes.HomeController.index()))
-    }.getOrElse(Redirect(routes.HomeController.index())))
+    }.getOrElse(Redirect(routes.HomeController.index()))) recover {
+      case e: Exception => InternalServerError(e.getMessage)
+    }
   }
 
   def mockAuthServerGetToken = Action {
@@ -119,6 +123,7 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
   }
 
   def getAuthServerUIPermissions(userPermissions: Map[String, Seq[Int]]) = {
+    logger.info("AUI PERMISSIONS: " + userPermissions.get("AUI"))
     userPermissions.get("AUI")
   }
 

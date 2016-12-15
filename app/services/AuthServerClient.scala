@@ -14,15 +14,15 @@ import scala.collection.mutable.ArrayBuffer
 class AuthServerClient @Inject() (ws: WSClient){
   
     def authenticate(username: String, password: String) = {
-    val body: JsValue = Json.obj("userName" -> username, "password" -> password)
-    val request: WSRequest = ws.url(AUTH_SERVER_URL + "/token").withHeaders(("Content-type", "application/json"))
-    val responseFuture = request.post(body)
+      val body: JsValue = Json.obj("userName" -> username, "password" -> password)
+      val request: WSRequest = ws.url(AUTH_SERVER_URL + "/token").withHeaders(("Content-type", "application/json"))
+      val responseFuture = request.post(body)
 
-    responseFuture map { response =>
-      {
-        (response.status, response.body)
+      responseFuture map { response =>
+        {
+          (response.status, response.body)
+        }
       }
-    }
   }
 
   def tokenVerify(token: String) = {
