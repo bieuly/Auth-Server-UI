@@ -21,4 +21,11 @@ object AuthServerUIPermissions {
 //  case object ViewRoles extends Permission("AuthServerUI", 5, VIEW_ROLES_STRING)
 //  case object ManageRoles extends Permission("AuthServerUI", 6, MANAGE_ROLES_STRING)
 
+  val VIEW_CUSTOMERS = 1
+  val MANAGE_CUSTOMERS = 2
+  val VIEW_USERS = 3
+  val MANAGE_USERS = 4
+  val VIEW_ROLES = 5
+  val MANAGE_ROLES = 6
+
 }

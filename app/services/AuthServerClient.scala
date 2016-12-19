@@ -1,8 +1,12 @@
 package services
 
+import play.api._
+import play.api.mvc._
 import play.api.libs.json.JsValue
 import play.api.libs.ws.WSRequest
-import play.api.libs.json.Json
+import play.api.libs.json.Json.toJson
+import play.api.libs.json.Json.parse
+//import play.api.libs.json.Json
 import util.AuthServerUIConstants.AUTH_SERVER_URL
 import play.api.libs.ws.WSClient
 import com.google.inject.Inject
@@ -11,8 +15,27 @@ import scala.concurrent.Future
 import play.api.libs.json._
 import scala.collection.mutable.ArrayBuffer
 
+import security.AuthServerUIPermissions.MANAGE_CUSTOMERS
+import security.AuthServerUIPermissions.VIEW_CUSTOMERS
+import security.AuthServerUIPermissions.MANAGE_USERS
+import security.AuthServerUIPermissions.VIEW_USERS
+import security.AuthServerUIPermissions.MANAGE_ROLES
+import security.AuthServerUIPermissions.VIEW_ROLES
+
+import _root_.util.JsonMappers.tokenClaimReads
+
+import models.TokenClaim
+import models.UserCreationRequest
+import models.CustomerCreationRequest
+
+import exceptions.ParseTokenClaimException
+import exceptions.TokenVerifyException
+import exceptions.RetrieveTokenException
+
 class AuthServerClient @Inject() (ws: WSClient){
-  
+
+    private val logger = Logger(this.getClass)
+
     def authenticate(username: String, password: String) = {
       val body: JsValue = Json.obj("userName" -> username, "password" -> password)
       val request: WSRequest = ws.url(AUTH_SERVER_URL + "/token").withHeaders(("Content-type", "application/json"))
@@ -20,6 +43,7 @@ class AuthServerClient @Inject() (ws: WSClient){
 
       responseFuture map { response =>
         {
+          logger.error("status is: " + response.status + response.body)
           (response.status, response.body)
         }
       }
@@ -60,7 +84,7 @@ class AuthServerClient @Inject() (ws: WSClient){
       }
       """
     
-    authServerUIResponse
+    Future(200, authServerUIResponse)
   }
 
   def getCustomers = {
@@ -92,7 +116,7 @@ class AuthServerClient @Inject() (ws: WSClient){
 ]
     """.stripMargin
 
-    authServerUIResponse
+    Future(authServerUIResponse)
 //    var result = ArrayBuffer[Human]()
 //    val json = parse(authServerUIResponse)
 //    val elements = (json \ "Humans").children
@@ -228,5 +252,45 @@ class AuthServerClient @Inject() (ws: WSClient){
 ]
       """
   }
+
+  def createUser(request: UserCreationRequest) = {
+//    val request: WSRequest = ws.url(AUTH_SERVER_URL + "/users").withHeaders(("Content-type", "application/json")).withBody(Json.toJson(request))
+//    val responseFuture = request.post()
+//    responseFuture map { response => (response.status, response.body) }
+    Future(201, "EEEEER Created Role")
+  }
+
+  def createCustomer(request: CustomerCreationRequest) = {
+    Future(200, "Customer created")
+  }
+
+  def verifyRequest(tokenOpt: Option[String], p: Int => Boolean) = {
+    tokenOpt match {
+      case Some(token) => {
+        tokenVerify(token).map(tokenVerifyResponse => {
+          tokenVerifyResponse match {
+            case (200, responseBody) => {
+              Json.parse(responseBody).validate[TokenClaim] match {
+                case s: JsSuccess[TokenClaim] => {
+                  val permissions = s.get.permissions.get("AUI")
+                  permissions match {
+                    case Some(permissions) => {
+                      (permissions.exists(p), Some(permissions))
+                    }
+                    case None => (false, None)
+                  }
+                }
+                case _ => throw new ParseTokenClaimException
+              }
+            }
+            case (_, responseBody) => throw new TokenVerifyException(responseBody)
+          }
+        })
+      }
+      case None => throw new RetrieveTokenException
+    }
+
+  }
+
 
 }

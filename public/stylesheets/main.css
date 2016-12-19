@@ -43,3 +43,21 @@ label.form-inline {
 .panel-heading {
 	color: #046595 !important;
 }
+
+.pop-outer {
+    background-color: rgba(0,0,0,0.5);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.pop-inner{
+    width: 25% !important;
+    margin: 15% auto;
+}
+
+.info {
+    margin-left: 20px;
+}

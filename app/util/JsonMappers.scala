@@ -1,9 +1,8 @@
 package util
 
 import play.api.libs.json.{JsPath, Json, Reads}
-import models.{Customer, LoginRequest}
+import models._
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import models.TokenClaim
 
 /**
   * Created by billyhoang on 2016-12-03.
@@ -21,4 +20,10 @@ object JsonMappers {
 
   implicit val tokenClaimWrites = Json.writes[TokenClaim]
   implicit val tokenClaimReads = Json.reads[TokenClaim]
+
+  implicit val userCreationRequestWrites = Json.writes[UserCreationRequest]
+  implicit val userCreationRequestReads = Json.reads[UserCreationRequest]
+
+  implicit val customerCreationRequestWrites = Json.writes[CustomerCreationRequest]
+  implicit val customerCreationRequestReads = Json.reads[CustomerCreationRequest]
 }

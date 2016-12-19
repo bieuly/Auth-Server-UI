@@ -1,11 +1,12 @@
 @()
 @main("Sign in") {
-	<div data-ng-controller="loginController">
+<div id="loginPage">
+    <div data-ng-controller="loginController">
         <div class="section group">
             <form role="form"
                   data-ng-submit="postLoginForm('@routes.HomeController.login', '@routes.HomeController.welcome()')">
-                <div class="col span_2_of_5"></div>
-                <div class="sign-in-panel panel panel-default col span_1_of_5">
+                <div class="col span_1_of_3"></div>
+                <div class="sign-in-panel panel panel-default col span_1_of_3">
                     <div class="panel-body">
                         <h1 class="sign-in-header">Sign in</h1>
                         <div class="form-group">
@@ -21,7 +22,7 @@
                         <input class="btn btn-primary" type="submit" value="Sign in">
                     </div>
                 </div>
-                <div class="col span_2_of_5"></div>
+                <div class="col span_1_of_3"></div>
             </form>
         </div>
         <div class="section group">
@@ -33,5 +34,7 @@
             </div>
             <div class="col span_1_of_3"></div>
         </div>
-	</div>
+    </div>
+</div>
+
 }

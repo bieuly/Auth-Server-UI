@@ -1,6 +1,12 @@
 @import play.api.libs.json.Json
 @import play.api.libs.json.Json.toJson
 @import util.JsonMappers.customerFmt
+@import security.AuthServerUIPermissions.MANAGE_CUSTOMERS
+@import security.AuthServerUIPermissions.VIEW_CUSTOMERS
+@import security.AuthServerUIPermissions.VIEW_USERS
+@import security.AuthServerUIPermissions.MANAGE_USERS
+@import security.AuthServerUIPermissions.VIEW_ROLES
+@import security.AuthServerUIPermissions.MANAGE_ROLES
 @(username: String, token: String, customers: Option[List[Customer]], permissions: Option[Seq[Int]])
 @main(s"Welcome $username") {
 <div data-ng-controller="mainController">
@@ -8,84 +14,157 @@
         <div class='page-header'>
             <div class='btn-toolbar pull-right'>
                 <div class='btn-group'>
-                    <a href="@routes.HomeController.index" class="btn btn-primary" role="button">Sign out</a>
+                    <a class="btn btn-primary" href="@routes.HomeController.index" role="button">Sign out</a>
                 </div>
             </div>
             <h1>Welcome @username!</h1>
 
         </div>
 	</div>
-	<div class="section group" data-ng-if="@permissions.isDefined">
+	<div class="section group">
         <div class="col span_1_of_4 list-group">
-        <div class="panel panel-default">
-            <div class="panel-heading clearfix">
-                <b>CUSTOMERS</b>
-                <div class="btn-group pull-right">
-                    <a href="#" data-ng-click="showCreateCustomerForm=true; showCustomerDetails=false"><span class="glyphicon glyphicon-plus-sign"></span></a>
+            <div class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    <b>CUSTOMERS</b>
+                    <div class="btn-group pull-right">
+                        @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_CUSTOMERS})){
+                        <a href="#" data-ng-click="clickCreateCustomerButton()"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                        }
+                    </div>
+                </div>
+                <div class="panel-body">
+                    @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_CUSTOMERS || p==VIEW_CUSTOMERS})){
+                        <ul class="list-group">
+                            @customers.isDefined match {
+                                case true => {
+                                    @for(customer <- customers.get){
+                                        <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false; getUsers(selectedCustomer._id); getRoles(selectedCustomer._id)" href="#">@customer.customerName</a>
+                                    }
+                                }
+                                case false => {
+                                    <b>Error while trying to retrieve customers</b>
+                                }
+                            }
+                        </ul>
+                    } else {
+                        You do not have permission to view customers
+                    }
+
                 </div>
             </div>
-            <div class="panel-body">
-                <ul class="list-group">
-                    @customers.isDefined match {
-                        case true => {
-                            @for(customer <- customers.get){
-                                <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false" href="#">@customer.customerName</a>
-                            }
-                        }
-                        case false => {
-                            <b>Error while trying to retrieve customers</b>
-                        }
-                    }
-                </ul>
-            </div>
         </div>
-			</div>
 			<div class="col span_3_of_4">
                 <div class="panel panel-default" data-ng-show="showCustomerDetails">
                     <div class="panel-heading"><b>CUSTOMER DETAILS</b></div>
                     <div class="panel-body">
                         <div class="section group">
-                            <ul class="list-group">
-                                <li>ID: {{ selectedCustomer._id }}</li>
-                                <li>Name: {{selectedCustomer.customerName}}</li>
-                            </ul>
+                            <div class="section group">
+                                <div class="col span_1_of_12"><label>ID:</label></div>
+                                <div class="col span_1_of_12">{{ selectedCustomer._id }}</div>
+                            </div>
+                            <div class="section group">
+                                <div class="col span_1_of_12"><label>Name:</label></div>
+                                <div class="col span_1_of_12">{{ selectedCustomer.customerName }}</div>
+                            </div>
                         </div>
                        	<ul class="nav nav-tabs">
                         	<li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
-                            <li role="presentation" id="rolesTab"><a href="#"><span>Roles</span></a></li>
+                            <li role="presentation" id="rolesTab" data-ng-click="getRoles(selectedCustomer._id)"><a href="#"><span>Roles</span></a></li>
                         </ul>
                         <div class="section group">
                             <div class="col span_2_of_7">
                                 <div class="panel panel-default" data-ng-show="showUsers">
                                     <div class="panel-heading clearfix">
                                         <b>Users</b>
-                                        <div class="btn-group pull-right">
-                                            <a href="#" data-ng-click="showCreateUserForm=true; "><span class="glyphicon glyphicon-plus-sign"></span></a>
-                                        </div>
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_USERS})){
+                                            <div class="btn-group pull-right">
+                                                <a href="#" data-ng-click="clickCreateUserButton()"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                                            </div>
+                                        }
                                     </div>
                                     <div class="panel-body">
-                                        You do not have permission to view this.
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_USERS})){
+                                            <ul class="list-group">
+                                                <a class="list-group-item" data-ng-repeat="user in allUsers" data-ng-click="$parent.selectedUser=user; $parent.showUserDetails=true; $parent.showCreateUserForm=false">{{ user.userName }}</a>
+                                            </ul>
+                                        } else { You do not have permission to view this. }
                                     </div>
                                 </div>
                                 <div class="panel panel-default" data-ng-show="showRoles">
                                     <div class="panel-heading clearfix">
                                         <b>Roles</b>
-                                        <div class="btn-group pull-right">
-                                            <a href="#" data-ng-click="showCreateRoleForm=true"><span class="glyphicon glyphicon-plus-sign"></span></a>
-                                        </div>
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_ROLES})){
+                                            <div class="btn-group pull-right">
+                                                <a href="#" data-ng-click="clickCreateRoleButton()"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                                            </div>
+                                        }
                                     </div>
                                     <div class="panel-body">
-                                        You do not have permission to view this.
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_ROLES})){
+                                        <ul class="list-group">
+                                            <a class="list-group-item" data-ng-repeat="role in allRoles" data-ng-click="$parent.selectedRole=role; $parent.showRoleDetails=true; $parent.showCreateRoleForm=false" href="#">{{ role.displayName }}</a>
+                                        </ul>
+                                        } else { You do not have permission to view this. }
                                     </div>
                                 </div>
                             </div>
                             <div class="col span_5_of_7">
+                                <div class="panel panel-default" data-ng-show="showUserDetails">
+                                    <div class="panel-heading">
+                                        <b>User Details</b>
+                                    </div>
+                                    <div class="panel-body">
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_USERS})){
+                                            <div class="section group">
+                                                <div class="col span_1_of_2"><label>Username:</label> <span class="info">{{selectedUser.userName}}</span></div>
+                                            </div>
+                                            <div class="section group">
+                                                <div class="col span_1_of_3"><label>First Name:</label><span class="info">{{selectedUser.firstName}}</span></div>
+                                                <div class="col span_1_of_3"><label>Last Name:</label><span class="info">{{selectedUser.lastName}}</span></div>
+                                            </div>
+                                            <div class="section group">
+                                                <div class="col span_1_of_3"><label>User Type:</label><span class="info">{{selectedUser.userType}}</span></div>
+                                                <div class="col span_1_of_3"><label>Status:</label><span class="info">{{selectedUser.userStatusType}}</span></div>
+                                            </div>
+                                            <hr>
+                                            <label>Assigned Roles:</label>
+                                            <div class="panel panel-default">
+                                                <div class="panel-body">
+                                                    {{ selectedUser.rolesId }}
+                                                </div>
+                                            </div>
+                                        } else { You do not have permission to view this. }
+                                    </div>
+                                </div>
+                                <div class="panel panel-default" data-ng-show="showRoleDetails">
+                                    <div class="panel-heading">
+                                        <b>Role Details</b>
+                                    </div>
+                                    <div class="panel-body">
+                                        @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_ROLES})){
+                                            <div class="section group">
+                                                <div class="col span_1_of_5"><label>Display Name:</label></div>
+                                                <div class="col span_1_of_4">{{selectedRole.displayName}}</div>
+                                            </div>
+                                            <hr>
+                                            <div class="section group">
+                                                <div class="col span_1_of_2">
+                                                    <label>Assigned Permissions:</label>
+                                                        <ul class="list-group">
+                                                            <li class="list-group-item" data-ng-repeat="permission in selectedRole.permissions">{{ permission.name }}</li>
+                                                        </ul>
+                                                </div>
+
+                                                </div>
+                                            </div>
+                                        } else { You do not have permission to view this. }
+                                    </div>
                                 <div class="panel panel-default" data-ng-show="showCreateUserForm">
                                     <div class="panel-heading">
                                         <b>Create User</b>
                                     </div>
                                     <div class="panel-body">
-                                    	<form id="createuserform">
+                                    	<form id="createuserform" data-ng-submit="submitCreateUser(selectedCustomer._id)">
                                     		<div class="section group">
 	                                    		<div class="col span_3_of_5">
 		                                    		<label>Display Name:</label>
@@ -95,25 +174,25 @@
 													  </div>
 													  <div class="form-group">
 													    <input type="text" class="form-control" id="lastname" placeholder="Last Name" data-ng-model="newUserLastName">
-													  </div>                                   			
+													  </div>
 		                                    		</div>
 	                                    		</div>
 	                                    		<div class="col span_1_of_5">
 	                                    			<label>Status:</label>
 	                                    			<div class="form-check">
 													  <label class="form-check-label">
-													    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
+													    <input class="form-check-input" type="checkbox" unchecked data-ng-model="newUserStatusSelect">
 													    Enabled
 													  </label>
 												</div>
-                                    		</div>	                                    		                                    		
+                                    		</div>
                                     		</div>
 											<div class="section group">
 											    <div class="col span_2_of_5">
 	                     					        <label>Username:</label>
 		                                    		<div class="form-group">
 		                                    			<div class="form-group">
-		                                    				<input type="text" class="form-control" id="username">
+		                                    				<input type="text" class="form-control" data-ng-model="newUserUsername">
 		                                    			</div>
 		                                    		</div>
                                     			</div>
@@ -131,8 +210,17 @@
 												</div>
 											</div>
 											<div class="section group">
-												<div class="col span_4_of_5">
+												<!--<div class="col span_4_of_5">-->
 													<div class="alert alert-warning" data-ng-show="newUserPassword !== '' && newUserPasswordRepeat !== '' && newUserPassword !== newUserPasswordRepeat">Passwords are not identical</div>
+												<!--</div>-->
+											</div>
+											<div class="section group">
+												<div class="col span_1_of_4">
+													<label>User Type:</label>
+													<select class="form-control" ng-model="newUserType">
+														<option value="">Please select</option>
+														<option data-ng-repeat="type in availableUserTypes" value="{{type}}">{{type}}</option>
+													</select>
 												</div>
 											</div>
 											<div class="section group">
@@ -140,12 +228,12 @@
 													<div class="panel panel-default">
 														<div class="panel-heading">All Roles:</div>
 														<div class="panel-body">
-															<div class="form-check">
+															<div class="form-check" data-ng-repeat="role in allRoles">
 															  <label class="form-check-label">
-															    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
-															    Administrator
+															    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked data-ng-click="clickSelectRole(role)">
+															    {{ role.displayName }}
 															  </label>
-															</div>															
+															</div>
 														</div>
 													</div>
 												</div>
@@ -153,20 +241,29 @@
 													<div class="panel panel-default">
 														<div class="panel-heading">Selected Roles:</div>
 														<div class="panel-body">
-															<div class="form-check">
+															<div class="form-check" data-ng-repeat="role in selectedRoles">
 															  <label class="form-check-label">
 															    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
-															    Administrator
+															    {{ role.displayName }}
 															  </label>
-															</div>															
+															</div>
 														</div>
-													</div>												
+													</div>
 												</div>
 											</div>
 											<div class="section group col pull-right">
 												<button type="submit" class="btn btn-primary">Save</button>
-												<button class="btn" data-ng-click="showCreateUserForm=false">Cancel</button>
+												<a class="btn btn-" data-ng-click="showCreateUserForm=false">Cancel</a>
 											</div>
+                                            <div class="section group alert alert-warning" data-ng-show="showCreateUserFeedback">
+                                                <div class ="span_1_of_1">
+                                                    Please fill in the following fields: <br><hr>
+                                                    <ul>
+                                                        <li data-ng-repeat="field in createUserFeedback">{{field}}</li>
+                                                    </ul>
+                                                </div>
+
+                                            </div>
                                     	</form>
                                     </div>
                                 </div>
@@ -175,7 +272,7 @@
                                     <div class="panel-body">
                                     	<form id="createroleform">
                                     	<div class="col span_1_of_2">
-                                    	
+
                                     		<div class="form-group">
 										    	<label>Name:</label>
 										    	<input type="text" class="form-control" id="newRoleName" placeholder="eg. Administrator" data-ng-model="newRoleName">
@@ -193,12 +290,12 @@
 															</div>
 														</div>
 	  												</div>
-	  											</div>  											
+	  											</div>
   											</div>
 									    </div>
 									    <div class="section group col pull-right">
 									    	<button type="submit" class="btn btn-primary">Save</button>
-									    	<button class="btn btn-alert" data-ng-click="showCreateRoleForm=false; clearCreateRoleForm()">Cancel</button>
+									    	<a class="btn btn-alert" data-ng-click="showCreateRoleForm=false; clearCreateRoleForm()">Cancel</a>
 									    </div>
                                     	</form>
 
@@ -216,18 +313,32 @@
                          			<div class="col span_1_of_4">
                         				<label>Name:</label>
 										<div class="form-group">
-	    									<input type="text" class="form-control" id="firstname" placeholder="eg: BillyBob">
+	    									<input type="text" class="form-control" id="firstname" placeholder="eg: BillyBob" data-ng-model="newCustomerName">
 										</div>
+                                        <div class="alert alert-danger" data-ng-show="createCustomerFeedback !=''">{{ createCustomerFeedback }}</div>
 									</div>
 								</div>
 									<div class="pull-right">
-										<button type="submit" class="btn btn-primary">Save</button>
-										<button class="btn" data-ng-click="showCreateUserForm=false">Cancel</button>
-									</div>								
+										<button type="submit" class="btn btn-primary" data-ng-click="submitCreateCustomer(newCustomerName)">Save</button>
+										<a class="btn btn-default" data-ng-click="showCreateCustomerForm=false">Cancel</a>
+									</div>
 							</form>
                     </div>
                 </div>
 			</div>
 	</div>
+    <div class="pop-outer" data-ng-show="showAlertBox">
+                <div class="panel panel-default pop-inner" data-ng-show="showAlertBox">
+                    <div class="panel-heading">
+                        <b>MESSAGE:</b>
+                        <div class="pull-right">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close" data-ng-click="showAlertBox=false; alertMessage=''"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                            {{ alertMessage }}
+                    </div>
+                </div>
+    </div>
 </div>
 }
