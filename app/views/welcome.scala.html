@@ -38,7 +38,7 @@
                             @customers.isDefined match {
                                 case true => {
                                     @for(customer <- customers.get){
-                                        <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false; getUsers(selectedCustomer._id); getRoles(selectedCustomer._id)" href="#">@customer.customerName</a>
+                                        <a class="list-group-item" data-ng-click="selectedCustomer = @Json.toJson(customer); showCustomerDetails=true; showCreateCustomerForm=false; getUsers(selectedCustomer._id); getRoles(selectedCustomer._id); clickUsersTab()" href="#">@customer.customerName</a>
                                     }
                                 }
                                 case false => {
@@ -230,7 +230,7 @@
 														<div class="panel-body">
 															<div class="form-check" data-ng-repeat="role in allRoles">
 															  <label class="form-check-label">
-															    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked data-ng-click="clickSelectRole(role)">
+															    <input class="form-check-input" type="checkbox" value="{{role}}" unchecked data-ng-click="selectRole(role)">
 															    {{ role.displayName }}
 															  </label>
 															</div>
@@ -243,7 +243,7 @@
 														<div class="panel-body">
 															<div class="form-check" data-ng-repeat="role in selectedRoles">
 															  <label class="form-check-label">
-															    <input class="form-check-input" type="checkbox" name="exampleRadios" id="exampleRadios1" value="option1" unchecked>
+															    <input class="form-check-input" type="checkbox" value="{{role}}" unchecked data-ng-click="deselectRole(role)">
 															    {{ role.displayName }}
 															  </label>
 															</div>

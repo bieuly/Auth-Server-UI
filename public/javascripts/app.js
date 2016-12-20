@@ -49,6 +49,7 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 	$scope.showCreateRoleForm = false;
 	$scope.showRoleDetails = false;
 	$scope.allRoles = [];
+	$scope.selectedRoles = [];
 	$scope.selectedRoleNames = [];
 
     // PERMISSIONS
@@ -87,16 +88,34 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 	    $scope.selectedPermissions.selected = [];
 	};
 
-    $scope.clickSelectRole = function(role) {
+    $scope.selectRole = function(role) {
+        var idx=$scope.allRoles.indexOf(role);
+        if(idx != -1){
+            $scope.allRoles.splice(idx, 1);
+        }
+        $scope.selectedRoles.push(role);
         $scope.selectedRoleNames.push(role.name);
     };
 
+     $scope.deselectRole = function(role) {
+        var idx=$scope.selectedRoles.indexOf(role);
+                if(idx != -1){
+                    $scope.selectedRoles.splice(idx, 1);
+                    $scope.selectedRoleNames.splice(idx, 1);
+                }
+                $scope.allRoles.push(role);
+     };
+
 	$scope.clickUsersTab = function() {
+        $(".nav li").removeClass("active");
+        $("#usersTab").addClass("active");
         toggleRoles(false);
         $scope.showUsers = true;
 	};
 
 	$scope.clickRolesTab = function() {
+	    $(".nav li").removeClass("active");
+        $("#rolesTab").addClass("active");
 	    toggleUsers(false);
 	    $scope.showRoles = true;
 	};
