@@ -11,6 +11,7 @@ import play.api.libs.ws.WSClient
 import play.api.libs.ws.WSRequest
 import play.api.mvc.Results.Status
 import play.api.mvc.Results.Forbidden
+import play.api.mvc.Results.Unauthorized
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
@@ -43,6 +44,7 @@ import exceptions.RetrieveTokenException
 import exceptions.TokenVerifyException
 import exceptions.ParseTokenClaimException
 import exceptions.UserNotAuthorizedException
+import exceptions.TokenInvalidatedException
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -61,7 +63,8 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
         logger.error(username + password)
         authClient.authenticate(username, password) map {
           case (200, token) => {
-            Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token))}
+            Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token))
+          }
           case (statusCode, errorMsg) => {
             logger.error(statusCode + ": " + errorMsg)
             (Ok(toJson(Map("valid" -> false))))
@@ -82,19 +85,30 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           val authorized = verifyRequestResponse._1
           val permissions = verifyRequestResponse._2
 
-          if(authorized) {
-            authClient.getCustomers map { customers =>
-              Json.parse(customers).validate[List[Customer]] match {
-                case customers: JsSuccess[List[Customer]] => Ok(views.html.welcome(user, token, Some(customers.get), permissions)).withHeaders(("Cache-Control", "no-cache, must-revalidate, no-store"))
-                case _ => Ok(views.html.welcome(user, token, None, permissions))
+          if (authorized) {
+            authClient.getCustomers map { getCustomersResponse =>
+              val status = getCustomersResponse._1
+              val responseBody = getCustomersResponse._2
+              status match {
+                case 200 => {
+                  val customers = responseBody
+                  Json.parse(customers).validate[List[Customer]] match {
+                    case customers: JsSuccess[List[Customer]] => Ok(views.html.welcome(user, token, Some(customers.get), permissions)).withHeaders(("Cache-Control", "no-cache, must-revalidate, no-store"))
+                    case _                                    => Ok(views.html.welcome(user, token, None, permissions))
+                  }
+                }
+                case _ => Redirect(routes.HomeController.index())
               }
+
+            } recover {
+              case e => Redirect(routes.HomeController.index())
             }
           } else { Future(Ok(views.html.welcome(user, token, None, None))) }
         }
       }
-      case (None,None) => {
-        logger.error("BOTH ARE NONE")
-        Future(Redirect(routes.HomeController.index()))}
+      case (_, _) => {
+        Future(Redirect(routes.HomeController.index()))
+      }
     }
 
   }
@@ -110,16 +124,20 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           createCustomerResponse <- authClient.createCustomer(customerCreationRequest)
         } yield createCustomerResponse
 
-        responseFut map { case (status, responseBody) =>
-          Status(status)(responseBody)
+        responseFut map {
+          case (status, responseBody) =>
+            Status(status)(responseBody)
         } recover {
-          case e: UserNotAuthorizedException => {
+          case e @ (_: UserNotAuthorizedException | _: TokenInvalidatedException) => {
             logger.error("User is not authorized")
-            Forbidden(e.getMessage)
+            Unauthorized(e.getMessage)
+          }
+          case e: TokenVerifyException => {
+            logger.error("Unexpected error occured while trying to verify token")
+            InternalServerError(e.getMessage)
           }
         }
-      }
-    )
+      })
   }
 
   def createUser = Action.async(parse.json) { implicit request =>
@@ -133,36 +151,45 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           createUserResponse <- authClient.createUser(userCreationRequest)
         } yield createUserResponse
 
-        responseFut map { case (status, responseBody) =>
-          Status(status)(responseBody)
+        responseFut map {
+          case (status, responseBody) =>
+            Status(status)(responseBody)
         }
-      }
-    )
+      })
   }
-
 
   def mockAuthServerGetToken = Action {
     Ok("MOCKTOKENMOCKTOKENMOCKTOKEN")
   }
 
   def getCustomers = Action.async {
-    authClient.getCustomers map { customers => Ok(customers)}
+    authClient.getCustomers map { getRolesResponse =>
+      val status = getRolesResponse._1
+      val responseBody = getRolesResponse._2
+      Status(status)(responseBody)
+    }
   }
 
   def getUsers(customerId: String) = Action.async {
-    val usersJsonString = authClient.getUsers
-    Future(Ok(usersJsonString))
+    authClient.getUsers(customerId) map { getRolesResponse =>
+      val status = getRolesResponse._1
+      val responseBody = getRolesResponse._2
+      Status(status)(responseBody)
+    }
   }
 
   def getRoles(customerId: String) = Action.async {
-    val rolesJsonString = authClient.getRoles
-    Future(Ok(rolesJsonString))
+    authClient.getRoles(customerId) map { getRolesResponse =>
+      val status = getRolesResponse._1
+      val responseBody = getRolesResponse._2
+      Status(status)(responseBody)
+    }
+
   }
 
   def getAuthServerUIPermissions(userPermissions: Map[String, Seq[Int]]) = {
     logger.info("AUI PERMISSIONS: " + userPermissions.get("AUI"))
     userPermissions.get("AUI")
   }
-
 
 }

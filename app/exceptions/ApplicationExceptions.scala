@@ -7,4 +7,5 @@ package exceptions
 class UserNotAuthorizedException(message: String = "User is not authorized", cause: Throwable = null) extends Exception(message, cause)
 class ParseTokenClaimException(message: String = "Unable to parse token claim", cause: Throwable = null) extends Exception(message, cause)
 class TokenVerifyException(message: String = "Unable to verify token", cause: Throwable = null) extends Exception(message, cause)
+class TokenInvalidatedException(message: String = "Token has been invalidated", cause: Throwable = null) extends Exception(message, cause)
 class RetrieveTokenException(message: String = "Unable to retrieve token from request", cause: Throwable = null) extends Exception(message, cause)

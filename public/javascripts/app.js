@@ -1,6 +1,6 @@
 var myApp = angular.module('myApp', ['checklist-model']);
 
-myApp.controller('mainController', function($scope, $http, $location) {
+myApp.controller('mainController', function($scope, $http, $location, $timeout) {
 
     $scope.navSelection = '';
 	$scope.content = '';
@@ -167,13 +167,23 @@ myApp.controller('mainController', function($scope, $http, $location) {
                 $scope.showAlertBox = true;
                 $scope.newCustomerName = '';
                 $scope.createCustomerFeedback = '';
-                location.reload(true);
+                $timeout(function(){
+                	location.reload(true);	
+                }, 2000)
+                
             }).error(function(data, status){
             console.log("GOT A FAIL");
-                $scope.createCustomerResult = data;
-                console.log($scope.createCustomerResult);
-                $scope.alertMessage = data;
-                $scope.showAlertBox = true;
+            	if(status === 401){
+            		// NEED TO FIGURE OUT HOW TO REDIRECT TO LOGIN PAGE!!!
+            			$location.path("/login");
+            			$scope.$apply();
+            	} else {
+            		$scope.createCustomerResult = data;
+                    console.log($scope.createCustomerResult);
+                    $scope.alertMessage = data;
+                    $scope.showAlertBox = true;
+            	}
+                
             });
         } else {
             $scope.createCustomerFeedback = "Customer name is required.";
@@ -216,7 +226,10 @@ myApp.controller('mainController', function($scope, $http, $location) {
                     			$scope.alertMessage = "User Created Successfully!"
                     			$scope.showAlertBox = true;
                     			$scope.showCreateUserFeedback = false;
-                    			location.reload(true);
+                    			$timeout(function(){
+                    				location.reload(true);
+                    			}, 2000);
+                    			
                     		}).error(function(data, status, headers, config) {
                     			$scope.error = status + ": " + data;
                     			console.log($scope.error);
