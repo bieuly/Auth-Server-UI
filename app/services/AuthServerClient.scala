@@ -29,6 +29,8 @@ import _root_.util.JsonMappers.roleCreationRequestReads
 import _root_.util.JsonMappers.roleCreationRequestWrites
 import _root_.util.JsonMappers.userCreationRequestReads
 import _root_.util.JsonMappers.userCreationRequestWrites
+import _root_.util.JsonMappers.changePasswordRequestReads
+import _root_.util.JsonMappers.changePasswordRequestWrites
 
 
 import models.TokenClaim
@@ -47,6 +49,7 @@ import com.digitalpaytech.client.util.CommunicationException
 import exceptions.TokenInvalidatedException
 import models.RoleCreationRequest
 import scala.compat.java8.FutureConverters
+import models.ChangePasswordRequest
 
 class AuthServerClient @Inject() (ws: WSClient, clientFactory: ClientFactory) {
 
@@ -241,6 +244,16 @@ class AuthServerClient @Inject() (ws: WSClient, clientFactory: ClientFactory) {
 //          (response.status, response.body)
 //        }
 //        }
+  }
+  
+  def changePassword(changePasswordRequest: ChangePasswordRequest, username: String) = {
+    val authClient = clientFactory.from(classOf[AuthClient])
+    submit(authClient.changePassword(Json.toJson(changePasswordRequest).toString(), username))(
+    (responseMessage: ByteBuf) => Future successful ((200, responseMessage.toString(Charset.defaultCharset()))),
+    (error: Throwable) => error match {
+      case ce: CommunicationException => Future successful ((ce.getResponseStatus, ce.getMessage))
+      case e => throw new Exception("w.e", e)
+    })
   }
 
   def verifyRequest(tokenOpt: Option[String], p: Int => Boolean) = {

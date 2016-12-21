@@ -100,5 +100,14 @@ public interface AuthClient {
     @Hystrix(validator = HttpStatusValidator.class)
     RibbonRequest<ByteBuf> createRole(@Content String str);
     
+    @Secure(false)
+    @TemplateName("changePassword")
+    @Http(method = HttpMethod.PUT, uri = "/users/{username}/password", headers={
+            @Header(name = "Content-Type", value = "application/json")
+    })
+    @ContentTransformerClass(StringTransformer.class)
+    @Hystrix(validator = HttpStatusValidator.class)
+    RibbonRequest<ByteBuf> changePassword(@Content String str, @Var ("username") String username);
+    
     
 }

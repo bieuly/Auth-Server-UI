@@ -24,6 +24,7 @@ import models.Customer
 import models.UserCreationRequest
 import models.CustomerCreationRequest
 import models.TokenClaim
+import models.ChangePasswordRequestAUI
 
 import _root_.util.JsonMappers.customerFmt
 import _root_.util.JsonMappers.loginRequestFmt
@@ -33,6 +34,9 @@ import _root_.util.JsonMappers.customerCreationRequestReads
 import _root_.util.JsonMappers.customerCreationRequestWrites
 import _root_.util.JsonMappers.roleCreationRequestReads
 import _root_.util.JsonMappers.roleCreationRequestWrites
+import _root_.util.JsonMappers.changePasswordRequestReadsAUI
+import _root_.util.JsonMappers.changePasswordRequestWritesAUI
+
 import _root_.util.Predicates
 import _root_.util.Predicates._
 
@@ -50,6 +54,7 @@ import exceptions.UserNotAuthorizedException
 import exceptions.TokenInvalidatedException
 import models.RoleCreationRequest
 import java.util.Date
+import models.ChangePasswordRequest
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -70,6 +75,10 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           case (200, token) => {
             val time = new Date().getTime.toString()
             Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token), ("timeStamp", time))
+          }
+          case (403, errorMsg) => {
+            logger.error("User is trying to login with temporary password")
+            Ok(toJson(Map("temporaryPassword" -> true)))
           }
           case (statusCode, errorMsg) => {
             logger.error(statusCode + ": " + errorMsg)
@@ -189,6 +198,32 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
           _ <- Predicates.checkAndThrowExceptionIfFails(authorized)(new UserNotAuthorizedException)
           roleCreationRequest <- authClient.createRole(roleCreationRequest)
         } yield roleCreationRequest
+
+        responseFut map {
+          case (status, responseBody) =>
+            Status(status)(responseBody)
+        }
+      })
+  }
+  
+  def changePassword = Action.async { implicit request =>
+    Future(Ok(views.html.changePassword()))
+  }
+  def changePasswordReq = Action.async(parse.json) { implicit request =>
+    request.body.validate[ChangePasswordRequestAUI].fold(
+      error => Future.successful(InternalServerError("Unable to process request")),
+      changePasswordRequest => {
+        val username = changePasswordRequest.username
+        val oldPassword = changePasswordRequest.oldPassword
+        val newPassword = changePasswordRequest.newPassword
+        
+        logger.info("##############OLD = " + oldPassword)
+        
+        val request = ChangePasswordRequest(oldPassword, newPassword)
+        
+        val responseFut = for {
+          changePasswordResponse <- authClient.changePassword(request, username)
+        } yield changePasswordResponse
 
         responseFut map {
           case (status, responseBody) =>

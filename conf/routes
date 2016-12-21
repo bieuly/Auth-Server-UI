@@ -26,5 +26,9 @@ GET		/permissions				controllers.HomeController.getPermissions
 
 GET 	/skinnypants4ever			controllers.HomeController.thankYou
 
+GET		/changePassword				controllers.HomeController.changePassword
+
+POST		/changePassword				controllers.HomeController.changePasswordReq
+
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 

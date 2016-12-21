@@ -8,3 +8,5 @@ case class TokenClaim(userName: String, permissions: Map[String, Seq[Int]], toke
 case class UserCreationRequest(userName: String, password: String, firstName: String, lastName: String, customerId: String, userStatusType: String, userType: String, roles: List[String])
 case class RoleCreationRequest(name: String, displayName: String, customerId: String, permissions: Map[String, Seq[Int]])
 case class CustomerCreationRequest(customerName: String)
+case class ChangePasswordRequest(oldPassword: String, newPassword: String)
+case class ChangePasswordRequestAUI(username: String, oldPassword: String, newPassword: String)

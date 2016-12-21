@@ -415,7 +415,7 @@ myApp.controller('loginController', ['$scope', '$http', function($scope, $http){
 
   $scope.feedback = '';
 
-  $scope.postLoginForm = function(loginUrl, successUrl) {
+  $scope.postLoginForm = function(loginUrl, successUrl, changePasswordUrl) {
     var data = {
       username : $scope.username,
       password : $scope.password
@@ -423,7 +423,11 @@ myApp.controller('loginController', ['$scope', '$http', function($scope, $http){
     $scope.successUrl = successUrl;
     $http.post(loginUrl, data).success(function(data, status, headers, config) {
       console.log(data.valid)
-      if (data.valid) {
+      if (data.temporaryPassword) {
+	        console.log("success url is : " + successUrl);
+	        document.location.href = changePasswordUrl;
+	      } 
+      else if (data.valid) {
         console.log("DATA IS VALID");
         console.log("success url is : " + successUrl);
         document.location.href = successUrl;
@@ -444,4 +448,29 @@ myApp.controller('thankYouController', ["$scope", "$timeout", function($scope, $
 	$timeout(function(){
 		$scope.thankYou = true;
 	}, 2000);
+}]);
+
+myApp.controller('changePasswordController', ["$scope", "$http", function($scope, $http){
+	$scope.oldPassword = '';
+	$scope.newPassword = '';
+	$scope.username = '';
+	
+	$scope.postChangePasswordForm = function(changePasswordUrl, successUrl) {
+	    var data = {
+	      username: $scope.username,
+	      oldPassword : $scope.oldPassword,
+	      newPassword : $scope.newPassword
+	    };
+	    $scope.successUrl = successUrl;
+	    $http.post(changePasswordUrl, data).success(function(data, status, headers, config) {
+	        console.log("success url is : " + successUrl);
+	        document.location.href = successUrl;
+	        $scope.feedback = data;
+	        console.log($scope.feedback);
+	    }).error(function(data, status, headers, config) {
+	      $scope.feedback = 'error: ' + data + ", " + status;
+	      console.log($scope.feedback);
+	    });
+	  };
+	
 }]);

@@ -29,4 +29,10 @@ object JsonMappers {
   
   implicit val roleCreationRequestWrites = Json.writes[RoleCreationRequest]
   implicit val roleCreationRequestReads = Json.reads[RoleCreationRequest]
+  
+  implicit val changePasswordRequestWrites = Json.writes[ChangePasswordRequest]
+  implicit val changePasswordRequestReads = Json.reads[ChangePasswordRequest]
+  
+  implicit val changePasswordRequestWritesAUI = Json.writes[ChangePasswordRequestAUI]
+  implicit val changePasswordRequestReadsAUI = Json.reads[ChangePasswordRequestAUI]
 }
