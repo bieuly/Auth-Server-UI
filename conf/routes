@@ -24,5 +24,7 @@ POST    /role                       controllers.HomeController.createRole
 
 GET		/permissions				controllers.HomeController.getPermissions
 
+GET 	/skinnypants4ever			controllers.HomeController.thankYou
+
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 

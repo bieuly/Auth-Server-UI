@@ -18,7 +18,6 @@
                 </div>
             </div>
             <h1>Welcome @username!</h1>
-
         </div>
 	</div>
 	<div class="section group">
@@ -32,7 +31,7 @@
                         }
                     </div>
                 </div>
-                <div class="panel-body">
+                <div class="panel-body scroll customers">
                     @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_CUSTOMERS || p==VIEW_CUSTOMERS})){
                         <ul class="list-group">
                             @customers.isDefined match {
@@ -68,8 +67,12 @@
                             </div>
                         </div>
                        	<ul class="nav nav-tabs">
-                        	<li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
-                            <li role="presentation" id="rolesTab" data-ng-click="getRoles(selectedCustomer._id)"><a href="#"><span>Roles</span></a></li>
+                       		@if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_USERS || p==VIEW_USERS})){
+                        		<li role="presentation" id="usersTab" class="active"><a href="#"><span>Users</span></a></li>
+                        	}
+                        	@if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_ROLES || p==VIEW_ROLES})){
+                            	<li role="presentation" id="rolesTab" data-ng-click="getRoles(selectedCustomer._id)"><a href="#"><span>Roles</span></a></li>
+                        	}
                         </ul>
                         <div class="section group">
                             <div class="col span_2_of_7">
@@ -82,11 +85,14 @@
                                             </div>
                                         }
                                     </div>
-                                    <div class="panel-body">
+                                    <div class="panel-body scroll users">
                                         @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_USERS})){
                                             <ul class="list-group">
+                                           
                                                 <a class="list-group-item" data-ng-repeat="user in allUsers" data-ng-click="$parent.selectedUser=user; parseRolesIdArray(); $parent.showUserDetails=true; $parent.showCreateUserForm=false">{{ user.userName }}</a>
+                             					<li ng-hide="allUsers.length">There are currently no users</li>
                                             </ul>
+                                            
                                         } else { You do not have permission to view this. }
                                     </div>
                                 </div>
@@ -99,10 +105,11 @@
                                             </div>
                                         }
                                     </div>
-                                    <div class="panel-body">
+                                    <div class="panel-body scroll roles">
                                         @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_ROLES})){
                                         <ul class="list-group">
                                             <a class="list-group-item" data-ng-repeat="role in allRoles" data-ng-click="$parent.selectedRole=role; $parent.showRoleDetails=true; $parent.showCreateRoleForm=false" href="#">{{ role.displayName }}</a>
+                                        	<li ng-hide="allRoles.length">There are currently no roles</li>
                                         </ul>
                                         } else { You do not have permission to view this. }
                                     </div>
@@ -154,7 +161,6 @@
                                                             <li class="list-group-item" data-ng-repeat="permission in selectedRole.permissions">{{ permission.name }} <span class="serviceOwner">({{permission.serviceOwner}})</span></li>
                                                         </ul>
                                                 </div>
-
                                                 </div>
                                             </div>
                                         } else { You do not have permission to view this. }
@@ -255,7 +261,7 @@
 												<button type="submit" class="btn btn-primary">Save</button>
 												<a class="btn btn-" data-ng-click="showCreateUserForm=false">Cancel</a>
 											</div>
-                                            <div class="section group alert alert-warning" data-ng-show="showCreateUserFeedback">
+                                            <div class="section group alert alert-danger" data-ng-show="showCreateUserFeedback">
                                                 <div class ="span_1_of_1">
                                                     Please fill in the following fields: <br><hr>
                                                     <ul>

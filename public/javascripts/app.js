@@ -85,12 +85,16 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout, 
 	$scope.getPermissions = function() {
 		$http.get("/permissions").success(function(data, status) {
 			$scope.permissions = angular.fromJson(data);
+			
 			var array = getAllAvailableServices(angular.fromJson(data));
-			var uniqueNames = [];
-            $.each(array, function(i, el){
-                if($.inArray(el, uniqueNames) === -1) uniqueNames.push(el);
-            });
-            $scope.allAvailableServices = uniqueNames;
+//			
+//			var uniqueNames = [];
+//            $.each(array, function(i, el){
+//                if($.inArray(el, uniqueNames) === -1) uniqueNames.push(el);
+//            });
+//            $scope.allAvailableServices = uniqueNames;
+			
+			$scope.allAvailableServices = array;
 		}).error(function(data, status, headers, config) {
 			$scope.error = 'error: ' + data + ", " + status;
 		});
@@ -101,7 +105,7 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout, 
 
         permissions.forEach(function(permission){
             var idx = result.indexOf(permission.serviceOwner);
-            if(idx = -1){
+            if(idx == -1){
                 result.push(permission.serviceOwner);
             }
     	});
@@ -194,12 +198,14 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout, 
 	};
 
 	$scope.parseRolesIdArray = function() {
+		$scope.parsedRolesId = [];
 	    for (var roleString in $scope.selectedUser.rolesId){
 	        if($scope.selectedUser.rolesId.hasOwnProperty(roleString)){
 	            var both = roleString.split("_");
 	            var serviceOwner = both[0];
 	            var roleName = both[1];
 	            var data = {"serviceOwner": serviceOwner, "roleName": roleName};
+	            
 	            $scope.parsedRolesId.push(data);
 	        }
 	    }
@@ -315,7 +321,7 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout, 
             	        userType: $scope.newUserType,
             	        roles: $scope.selectedRoleNames
             	    };
-
+            	console.log("Creating user with data: " + data.toString());
                     $http.post("/user", data).success(function(data, status) {
                     			$scope.createUserResult = data;
                     			console.log($scope.createUserResult);
@@ -431,4 +437,11 @@ myApp.controller('loginController', ['$scope', '$http', function($scope, $http){
     });
   };
 
+}]);
+
+myApp.controller('thankYouController', ["$scope", "$timeout", function($scope, $timeout){
+	$scope.thankYou = false;
+	$timeout(function(){
+		$scope.thankYou = true;
+	}, 2000);
 }]);

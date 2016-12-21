@@ -72,3 +72,36 @@ label.form-inline {
     margin: auto;
     margin-top: 5%;
 }
+
+.scroll.customers {
+	max-height:600px;
+    height: auto;
+    overflow: hidden;
+    overflow-y:auto;
+}
+
+.scroll.users, .scroll.roles {
+	max-height:400px;
+    height: auto;
+    overflow: hidden;
+    overflow-y:auto;
+}
+
+.fade-in-out {
+  transition: 0.5s linear all;  
+  opacity: 1;
+}
+.fade-in-out.ng-hide {
+  opacity: 0;
+}
+
+.thankYou {
+	font-size: 1000%;
+}
+
+.thankYouDiv {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+}

@@ -140,11 +140,15 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
             } recover {
               case e @ (_: UserNotAuthorizedException | _: TokenInvalidatedException) => {
                 logger.error("User is not authorized")
-                Unauthorized("Oops!" + e.getMessage)
+                Unauthorized("Oops! " + e.getMessage)
               }
               case e: TokenVerifyException => {
                 logger.error("Unexpected error occured while trying to verify token")
                 InternalServerError(e.getMessage)
+              }
+              case e => {
+                logger.error("Unexpected error occured")
+                InternalServerError("HEY")
               }
             }
         } else {
@@ -247,6 +251,10 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
       }
       case None => true
     }
+  }
+  
+  def thankYou = Action.async { implicit request =>
+    Future(Ok(views.html.thankyou()))
   }
   
 

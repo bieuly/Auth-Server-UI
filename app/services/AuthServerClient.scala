@@ -46,6 +46,7 @@ import io.netty.buffer.ByteBuf
 import com.digitalpaytech.client.util.CommunicationException
 import exceptions.TokenInvalidatedException
 import models.RoleCreationRequest
+import scala.compat.java8.FutureConverters
 
 class AuthServerClient @Inject() (ws: WSClient, clientFactory: ClientFactory) {
 
@@ -80,8 +81,17 @@ class AuthServerClient @Inject() (ws: WSClient, clientFactory: ClientFactory) {
     submit(authClient.tokenVerify(token))(
     (responseMessage: ByteBuf) => Future successful ((200, responseMessage.toString(Charset.defaultCharset()))),
     (error: Throwable) => error match {
-      case ce: CommunicationException => Future successful ((ce.getResponseStatus, ce.getMessage))
-      case e => throw new Exception("w.e", e)
+      case ce: CommunicationException => {
+        FutureConverters.toScala(ce.getResponseMessage) map {
+          msg => {
+            logger.error("HIHIHIHIHIHIHIHHI "+ msg)
+            (ce.getResponseStatus, msg)
+          }
+        } recover {
+          case e => throw new Exception("Error occured while trying to get response message", e)
+        }
+      }
+      case e => throw new Exception("Unexpected exception occured", e)
     }
 )     
     
@@ -252,8 +262,8 @@ class AuthServerClient @Inject() (ws: WSClient, clientFactory: ClientFactory) {
                 case _ => throw new ParseTokenClaimException
               }
             }
-            case (401, responseBody) => throw new TokenInvalidatedException(responseBody)
-            case (_, responseBody) => throw new TokenVerifyException(responseBody)
+            case (401, responseBody) => throw new TokenInvalidatedException(message = responseBody)
+            case (_, responseBody) => throw new TokenVerifyException(message = responseBody)
           }
         })
       }
