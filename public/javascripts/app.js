@@ -1,6 +1,6 @@
-var myApp = angular.module('myApp', ['checklist-model']);
+var myApp = angular.module('myApp', ['checklist-model', 'ngAnimate']);
 
-myApp.controller('mainController', function($scope, $http, $location, $timeout) {
+myApp.controller('mainController', function($scope, $http, $location, $timeout, $window) {
 
     $scope.navSelection = '';
 	$scope.content = '';
@@ -41,6 +41,7 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
     ];
     $scope.showCreateUserFeedback = false;
     $scope.createUserFeedback = [];
+    $scope.parsedRolesId = [];
 
 
 	// ROLES
@@ -60,6 +61,9 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
     };
     $scope.newRoleName = '';
     $scope.newRoleDisplayName = '';
+    $scope.selectedService = '';
+    $scope.allAvailableServices = [];
+    $scope.specifiedServicePermissions = [];
     
 
     $scope.getUsers = function(customerId) {
@@ -81,10 +85,30 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 	$scope.getPermissions = function() {
 		$http.get("/permissions").success(function(data, status) {
 			$scope.permissions = angular.fromJson(data);
+			var array = getAllAvailableServices(angular.fromJson(data));
+			var uniqueNames = [];
+            $.each(array, function(i, el){
+                if($.inArray(el, uniqueNames) === -1) uniqueNames.push(el);
+            });
+            $scope.allAvailableServices = uniqueNames;
 		}).error(function(data, status, headers, config) {
 			$scope.error = 'error: ' + data + ", " + status;
 		});
 	};
+
+	function getAllAvailableServices(permissions) {
+        var result = [];
+
+        permissions.forEach(function(permission){
+            var idx = result.indexOf(permission.serviceOwner);
+            if(idx = -1){
+                result.push(permission.serviceOwner);
+            }
+    	});
+    	console.log("HEY: " + result);
+    	return result;
+
+	}
 
     $scope.clickCreateCustomerButton = function() {
         $scope.showCustomerDetails = false;
@@ -141,6 +165,19 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 	    $scope.showCreateRoleForm = !$scope.showCreateRoleForm;
 	};
 
+	$scope.selectService = function (service) {
+	        $("#services").prop('checked', false);
+            $scope.specifiedServicePermissions = [];
+            $scope.selectedPermissions = [];
+	        $scope.permissions.forEach(function(permission) {
+                if(permission.serviceOwner === service){
+                    $scope.specifiedServicePermissions.push(permission);
+                }
+            })
+
+
+	};
+
 	function getPermissionServiceOwnerArray(permissions){
 		var serviceOwners = {};
 		
@@ -154,11 +191,19 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 		
 		console.log(serviceOwners);
 		return permissions.length <= 0 ? null : serviceOwners;
-
-		
-	
-		
 	};
+
+	$scope.parseRolesIdArray = function() {
+	    for (var roleString in $scope.selectedUser.rolesId){
+	        if($scope.selectedUser.rolesId.hasOwnProperty(roleString)){
+	            var both = roleString.split("_");
+	            var serviceOwner = both[0];
+	            var roleName = both[1];
+	            var data = {"serviceOwner": serviceOwner, "roleName": roleName};
+	            $scope.parsedRolesId.push(data);
+	        }
+	    }
+	}
 	
 	function toggleRoles(toggle) {
         $scope.showRoles = toggle;
@@ -220,11 +265,14 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
                 }, 2000)
                 
             }).error(function(data, status){
-            console.log("GOT A FAIL");
             	if(status === 401){
             		// NEED TO FIGURE OUT HOW TO REDIRECT TO LOGIN PAGE!!!
-            			$location.path("/login");
-            			$scope.$apply();
+            		    $scope.alertMessage = data;
+            		    $scope.showAlertBox = true;
+            		    $timeout(function(){
+            		        $window.location.href = '/';
+                            $window.location.href;
+            		    }, 1000);
             	} else {
             		$scope.createCustomerResult = data;
                     console.log($scope.createCustomerResult);
@@ -279,10 +327,20 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
                     			}, 2000);
                     			
                     		}).error(function(data, status, headers, config) {
-                    			$scope.error = status + ": " + data;
-                    			console.log($scope.error);
-                    			$scope.alertMessage = $scope.error;
-                    			$scope.showAlertBox = true;
+                    			if(status === 401){
+                                    // NEED TO FIGURE OUT HOW TO REDIRECT TO LOGIN PAGE!!!
+                                        $scope.alertMessage = data;
+                                        $scope.showAlertBox = true;
+                                        $timeout(function(){
+                                            $window.location.href = '/';
+                                            $window.location.href;
+                                        }, 1000);
+                                } else {
+                                    $scope.createCustomerResult = data;
+                                    console.log($scope.createCustomerResult);
+                                    $scope.alertMessage = data;
+                                    $scope.showAlertBox = true;
+                                }
                     		});
         }
 
@@ -298,20 +356,22 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
 		if($scope.newRoleName === '') { $scope.createRoleFeedback.push("- Name") }
 		if($scope.newRoleDisplayName === '') { $scope.createRoleFeedback.push("- Display Name") }
 		
-		var permissions = getPermissionServiceOwnerArray($scope.selectedPermissions.selected);
-		if(permissions === null) { $scope.createRoleFeedback.push("- Permissions") }
+		var permissions2 = getPermissionServiceOwnerArray($scope.selectedPermissions.selected);
+		if(permissions2 === null) { $scope.createRoleFeedback.push("- Permissions") }
 		
 		console.log($scope.selectedPermissions.selected);
 		
 		if($scope.createRoleFeedback.length > 0) {
 			$scope.showCreateRoleFeedback = true;
 		} else {
+
 			var data = {
 					"name": $scope.newRoleName,
 					"displayName": $scope.newRoleDisplayName,
 					"customerId": $scope.selectedCustomer._id,
-					"permissions": permissions
+					"permissions": permissions2
 			};
+
             $http.post("role", data).success(function(data, status){
                 console.log("GOT A SUCCESS");
                 $scope.createRoleResult = data;
@@ -322,21 +382,23 @@ myApp.controller('mainController', function($scope, $http, $location, $timeout) 
                 $scope.createRoleFeedback = '';
                 $timeout(function(){
                 	location.reload(true);	
-                }, 2000)
-                
+                }, 2000);
+
             }).error(function(data, status){
-            console.log("GOT A FAIL");
-            	if(status === 401){
-            		// NEED TO FIGURE OUT HOW TO REDIRECT TO LOGIN PAGE!!!
-            			$location.path("/login");
-            			$scope.$apply();
-            	} else {
-            		$scope.createRoleResult = data;
-                    console.log($scope.createRoleResult);
-                    $scope.alertMessage = data;
-                    $scope.showAlertBox = true;
-            	}
-                
+                    if(status === 401){
+                        // NEED TO FIGURE OUT HOW TO REDIRECT TO LOGIN PAGE!!!
+                            $scope.alertMessage = data;
+                            $scope.showAlertBox = true;
+                            $timeout(function(){
+                                $window.location.href = '/';
+                                $window.location.href;
+                            }, 1000);
+                    } else {
+                        $scope.createCustomerResult = data;
+                        console.log($scope.createCustomerResult);
+                        $scope.alertMessage = data;
+                        $scope.showAlertBox = true;
+                    }
             });
 		}
 	};

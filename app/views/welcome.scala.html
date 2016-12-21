@@ -28,7 +28,7 @@
                     <b>CUSTOMERS</b>
                     <div class="btn-group pull-right">
                         @if(permissions.isDefined && permissions.get.exists(p=>{p==MANAGE_CUSTOMERS})){
-                        <a href="#" data-ng-click="clickCreateCustomerButton()"><span class="glyphicon glyphicon-plus-sign"></span></a>
+                        <a href="#" ng-model="createCustomerButton" data-ng-click="clickCreateCustomerButton()"><span class="glyphicon glyphicon-plus-sign"></span></a>
                         }
                     </div>
                 </div>
@@ -85,7 +85,7 @@
                                     <div class="panel-body">
                                         @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_USERS})){
                                             <ul class="list-group">
-                                                <a class="list-group-item" data-ng-repeat="user in allUsers" data-ng-click="$parent.selectedUser=user; $parent.showUserDetails=true; $parent.showCreateUserForm=false">{{ user.userName }}</a>
+                                                <a class="list-group-item" data-ng-repeat="user in allUsers" data-ng-click="$parent.selectedUser=user; parseRolesIdArray(); $parent.showUserDetails=true; $parent.showCreateUserForm=false">{{ user.userName }}</a>
                                             </ul>
                                         } else { You do not have permission to view this. }
                                     </div>
@@ -128,11 +128,9 @@
                                             </div>
                                             <hr>
                                             <label>Assigned Roles:</label>
-                                            <div class="panel panel-default">
-                                                <div class="panel-body">
-                                                    {{ selectedUser.rolesId }}
-                                                </div>
-                                            </div>
+                                            <ul class="list-group">
+                                                <li class="list-group-item" data-ng-repeat="role in parsedRolesId">{{ role.roleName }} <span class="serviceOwner">({{role.serviceOwner}})</span></li>
+                                            </ul>
                                         } else { You do not have permission to view this. }
                                     </div>
                                 </div>
@@ -143,8 +141,10 @@
                                     <div class="panel-body">
                                         @if(permissions.isDefined && permissions.get.exists(p=>{p==VIEW_ROLES})){
                                             <div class="section group">
-                                                <div class="col span_1_of_5"><label>Display Name:</label></div>
-                                                <div class="col span_1_of_4">{{selectedRole.displayName}}</div>
+                                                <div class="col span_1_of_3"><label>Display Name:</label><span class="info">{{selectedRole.displayName}}</span></div>
+                                            </div>
+                                            <div class="section group">
+                                                <div class="col span_1_of_2"><label>Name:</label><span class="info">{{selectedRole.name}}</span></div>
                                             </div>
                                             <hr>
                                             <div class="section group">
@@ -281,14 +281,23 @@
 	  											<label>Display Name:</label>
 											    <input type="text" class="form-control" id="newRoleName" placeholder="eg. Administrator" data-ng-model="newRoleDisplayName">
   											</div>
+
+                                            <div class="form-group">
+                                                <label>Service:</label>
+                                                <select class="form-control" ng-model="selectedService" data-ng-change="selectService(selectedService)">
+                                                    <option value="">Please select</option>
+                                                    <option data-ng-repeat="service in allAvailableServices" value="{{service}}" data-ng-click="selectService()">{{service}}</option>
+                                                </select>
+                                            </div>
+
   											<div class="form-group">
 	  											<label>Permissions:</label>
 	  											<div class="panel panel-default">
 	  												<div class="panel-body">
-														<div data-ng-repeat="permission in permissions">
+														<div data-ng-repeat="permission in specifiedServicePermissions">
 															<div class="form-check">
 																<label class="form-check-label">
-																	<input class="form-check-input" type="checkbox" data-checklist-model="selectedPermissions.selected" data-checklist-value="permission" data-ng-click="selectPermission(permission)">
+																	<input class="form-check-input" id="services" type="checkbox" data-checklist-model="selectedPermissions.selected" data-checklist-value="permission" data-ng-click="selectPermission(permission)">
 																	{{ permission.name }} <span class="serviceOwner">({{ permission.serviceOwner }})</span>
 																</label>
 															</div>

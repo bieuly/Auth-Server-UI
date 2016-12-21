@@ -135,11 +135,12 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
   
             responseFut map {
               case (status, responseBody) =>
-                Status(status)(responseBody)
+                val time = new Date().getTime.toString()
+                Status(status)(responseBody).removingFromSession("timeStamp").addingToSession(("timeStamp", time))
             } recover {
               case e @ (_: UserNotAuthorizedException | _: TokenInvalidatedException) => {
                 logger.error("User is not authorized")
-                Unauthorized(e.getMessage)
+                Unauthorized("Oops!" + e.getMessage)
               }
               case e: TokenVerifyException => {
                 logger.error("Unexpected error occured while trying to verify token")
@@ -148,7 +149,7 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
             }
         } else {
             logger.error("Session timeout")
-            Future(Unauthorized("Session timeout"))
+            Future(Unauthorized("Oops! Your session has expired."))
         }
         
         
@@ -178,6 +179,7 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
       error => Future.successful(InternalServerError("Unable to process request")),
       roleCreationRequest => {
         val token = request.session.get("token")
+        logger.error("CREATING ROLE WITH THESE PERMISSIONS: " + roleCreationRequest.permissions.toString())
         val responseFut = for {
           (authorized, permissions) <- authClient.verifyRequest(token, p => p == MANAGE_ROLES)
           _ <- Predicates.checkAndThrowExceptionIfFails(authorized)(new UserNotAuthorizedException)
