@@ -18,7 +18,11 @@ GET     /users/:customerId          controllers.HomeController.getUsers(customer
 
 POST    /user                       controllers.HomeController.createUser
 
-GET     /roles/:customerId                      controllers.HomeController.getRoles(customerId)
+GET     /roles/:customerId          controllers.HomeController.getRoles(customerId)
+
+POST    /role                       controllers.HomeController.createRole
+
+GET		/permissions				controllers.HomeController.getPermissions
 
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 

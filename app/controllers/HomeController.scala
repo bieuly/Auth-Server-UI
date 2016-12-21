@@ -17,6 +17,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 import _root_.util.AuthServerUIConstants.AUTH_SERVER_URL
 import services.AuthServerClient
+import com.typesafe.config.ConfigFactory
 
 import models.LoginRequest
 import models.Customer
@@ -30,6 +31,8 @@ import _root_.util.JsonMappers.tokenClaimReads
 import _root_.util.JsonMappers.userCreationRequestReads
 import _root_.util.JsonMappers.customerCreationRequestReads
 import _root_.util.JsonMappers.customerCreationRequestWrites
+import _root_.util.JsonMappers.roleCreationRequestReads
+import _root_.util.JsonMappers.roleCreationRequestWrites
 import _root_.util.Predicates
 import _root_.util.Predicates._
 
@@ -45,6 +48,8 @@ import exceptions.TokenVerifyException
 import exceptions.ParseTokenClaimException
 import exceptions.UserNotAuthorizedException
 import exceptions.TokenInvalidatedException
+import models.RoleCreationRequest
+import java.util.Date
 
 @Singleton
 class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) extends Controller {
@@ -63,7 +68,8 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
         logger.error(username + password)
         authClient.authenticate(username, password) map {
           case (200, token) => {
-            Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token))
+            val time = new Date().getTime.toString()
+            Ok(toJson(Map("valid" -> true))).withSession(("user", username), ("token", token), ("timeStamp", time))
           }
           case (statusCode, errorMsg) => {
             logger.error(statusCode + ": " + errorMsg)
@@ -80,7 +86,7 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     val tokenOpt = request.session.get("token")
     (username, tokenOpt) match {
       case (Some(user), Some(token)) => {
-        logger.error(token)
+        logger.error(";LAFSDFAJD;LFJAFDS;FHASD;LGFH;LASGH;LASHADHFJ;LDS::::" + token)
         authClient.verifyRequest(tokenOpt, p => p == MANAGE_CUSTOMERS || p == VIEW_CUSTOMERS) flatMap { verifyRequestResponse =>
           val authorized = verifyRequestResponse._1
           val permissions = verifyRequestResponse._2
@@ -117,26 +123,35 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
     request.body.validate[CustomerCreationRequest].fold(
       error => Future.successful(InternalServerError("Unable to process request")),
       customerCreationRequest => {
+        val timeStamp = request.session.get("timeStamp")
         val token = request.session.get("token")
-        val responseFut = for {
-          (authorized, permissions) <- authClient.verifyRequest(token, p => p == MANAGE_CUSTOMERS)
-          _ <- Predicates.checkAndThrowExceptionIfFails(authorized)(new UserNotAuthorizedException)
-          createCustomerResponse <- authClient.createCustomer(customerCreationRequest)
-        } yield createCustomerResponse
-
-        responseFut map {
-          case (status, responseBody) =>
-            Status(status)(responseBody)
-        } recover {
-          case e @ (_: UserNotAuthorizedException | _: TokenInvalidatedException) => {
-            logger.error("User is not authorized")
-            Unauthorized(e.getMessage)
-          }
-          case e: TokenVerifyException => {
-            logger.error("Unexpected error occured while trying to verify token")
-            InternalServerError(e.getMessage)
-          }
+        
+        if(!isSessionExpired(timeStamp)){
+            val responseFut = for {
+            (authorized, permissions) <- authClient.verifyRequest(token, p => p == MANAGE_CUSTOMERS)
+            _ <- Predicates.checkAndThrowExceptionIfFails(authorized)(new UserNotAuthorizedException)
+            createCustomerResponse <- authClient.createCustomer(customerCreationRequest)
+            } yield createCustomerResponse
+  
+            responseFut map {
+              case (status, responseBody) =>
+                Status(status)(responseBody)
+            } recover {
+              case e @ (_: UserNotAuthorizedException | _: TokenInvalidatedException) => {
+                logger.error("User is not authorized")
+                Unauthorized(e.getMessage)
+              }
+              case e: TokenVerifyException => {
+                logger.error("Unexpected error occured while trying to verify token")
+                InternalServerError(e.getMessage)
+              }
+            }
+        } else {
+            logger.error("Session timeout")
+            Future(Unauthorized("Session timeout"))
         }
+        
+        
       })
   }
 
@@ -157,6 +172,26 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
         }
       })
   }
+  
+  def createRole = Action.async(parse.json) { implicit request =>
+    request.body.validate[RoleCreationRequest].fold(
+      error => Future.successful(InternalServerError("Unable to process request")),
+      roleCreationRequest => {
+        val token = request.session.get("token")
+        val responseFut = for {
+          (authorized, permissions) <- authClient.verifyRequest(token, p => p == MANAGE_ROLES)
+          _ <- Predicates.checkAndThrowExceptionIfFails(authorized)(new UserNotAuthorizedException)
+          roleCreationRequest <- authClient.createRole(roleCreationRequest)
+        } yield roleCreationRequest
+
+        responseFut map {
+          case (status, responseBody) =>
+            Status(status)(responseBody)
+        }
+      })
+  }
+  
+  
 
   def mockAuthServerGetToken = Action {
     Ok("MOCKTOKENMOCKTOKENMOCKTOKEN")
@@ -187,9 +222,30 @@ class HomeController @Inject() (ws: WSClient, authClient: AuthServerClient) exte
 
   }
 
+  def getPermissions = Action.async {
+    authClient.getPermissions map { getPermissionsResponse =>
+      val status = getPermissionsResponse._1
+      val responseBody = getPermissionsResponse._2
+      Status(status)(responseBody)
+    }
+  }
+  
   def getAuthServerUIPermissions(userPermissions: Map[String, Seq[Int]]) = {
     logger.info("AUI PERMISSIONS: " + userPermissions.get("AUI"))
     userPermissions.get("AUI")
   }
+  
+  def isSessionExpired(timeStamp: Option[String]) = {
+    timeStamp match {
+      case Some(time) => {
+        val previousTime = time.toLong
+        val currentTime = new Date().getTime
+        val timeout = (ConfigFactory.load().getInt("sessionTimeout") * 1000 * 60).toLong
+        if((currentTime - previousTime) > timeout) true else false
+      }
+      case None => true
+    }
+  }
+  
 
 }

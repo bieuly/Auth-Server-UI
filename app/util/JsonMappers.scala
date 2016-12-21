@@ -26,4 +26,7 @@ object JsonMappers {
 
   implicit val customerCreationRequestWrites = Json.writes[CustomerCreationRequest]
   implicit val customerCreationRequestReads = Json.reads[CustomerCreationRequest]
+  
+  implicit val roleCreationRequestWrites = Json.writes[RoleCreationRequest]
+  implicit val roleCreationRequestReads = Json.reads[RoleCreationRequest]
 }
